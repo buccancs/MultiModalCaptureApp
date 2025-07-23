@@ -18,12 +18,13 @@ import kotlinx.coroutines.*
  * ThermalCameraManager handles integration with Topdon TC001 thermal camera via USB-C.
  * Captures infrared video frames at ~25-30 Hz as specified in requirements.
  *
- * Based on analysis of TOPDON_EXAMPLE_SDK_USB_IR_1.3.7 sample application:
- * - Uses USBMonitor for device connection management
- * - Implements UVCCamera for video capture
- * - Uses IRCMD for thermal camera commands
- * - Processes YUV422 to ARGB conversion using LibIRParse
- * - Supports temperature calibration workflow
+ * Based on comprehensive analysis of TOPDON_EXAMPLE_SDK_USB_IR_1.3.7 sample application:
+ * - Uses USBMonitor for device connection management (IRUVC.java lines 132-214)
+ * - Implements UVCCamera for video capture (lines 414-426)
+ * - Uses IRCMD for thermal camera commands (lines 441-458)
+ * - Processes YUV422 to ARGB conversion using LibIRParse (ImageThread.java)
+ * - Supports temperature calibration workflow based on iOS documentation
+ * - Frame processing pipeline with rotation and pseudocolor support
  */
 class ThermalCameraManager(
     private val context: Context,
@@ -55,7 +56,7 @@ class ThermalCameraManager(
 
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
-    private var frameCallback: ((ByteArray, Long) -> Unit)? = null
+    private var thermalFrameCallback: ((ByteArray, Long) -> Unit)? = null
 
     // Capture job and output
     private var captureJob: Job? = null
@@ -136,6 +137,7 @@ class ThermalCameraManager(
 
     /**
      * Initialize thermal camera using Topdon SDK based on sample application
+     * Following the initialization sequence from IRUVC.java
      */
     private fun initializeThermalCamera() {
         try {
@@ -144,13 +146,15 @@ class ThermalCameraManager(
             uvcCamera = concreateUVCBuilder
                 .setUVCType(com.infisense.iruvc.uvc.UVCType.USB_UVC)
                 .build()
+            
+            // Adjust bandwidth for stability (from sample app)
             uvcCamera?.setDefaultBandwidth(1F)
 
             // Step 2: Initialize USB Monitor (from IRUVC.java lines 132-214)
             usbMonitor = com.infisense.iruvc.usb.USBMonitor(context, usbDeviceListener)
             usbMonitor?.register()
 
-            Timber.d("Topdon SDK initialized successfully")
+            Timber.d("Topdon SDK initialized successfully - UVCCamera and USBMonitor ready")
 
         } catch (e: Exception) {
             Timber.e(e, "Failed to initialize Topdon SDK")
@@ -166,6 +170,14 @@ class ThermalCameraManager(
             if (isThermalCamera(device)) {
                 usbMonitor?.requestPermission(device)
                 updateStatus("Thermal camera detected")
+            }
+        }
+
+        override fun onGranted(device: UsbDevice, granted: Boolean) {
+            if (granted) {
+                Timber.d("USB permission granted for thermal camera")
+            } else {
+                updateStatus("USB permission denied")
             }
         }
 
@@ -207,6 +219,7 @@ class ThermalCameraManager(
 
     /**
      * Initialize IRCMD (from IRUVC.java lines 441-458)
+     * Sets up thermal camera command interface for P2/TC001 devices
      */
     private fun initIRCMD() {
         try {
@@ -216,16 +229,26 @@ class ThermalCameraManager(
                 .setIdCamera(uvcCamera?.getNativePtr() ?: 0)
                 .setCreateResultCallback { resultCode ->
                     if (resultCode == com.infisense.iruvc.ircmd.ResultCode.SUCCESS) {
-                        Timber.d("IRCMD initialized successfully")
+                        Timber.d("IRCMD initialized successfully for thermal camera")
                         isConnected.set(true)
+                        
+                        // Start temperature calibration sequence after successful IRCMD init
+                        startTemperatureCalibration()
                     } else {
                         Timber.e("IRCMD initialization failed: $resultCode")
+                        updateStatus("Thermal camera initialization failed")
                     }
                 }
                 .build()
 
+            if (ircmd == null) {
+                Timber.e("IRCMD builder returned null - initialization failed")
+                updateStatus("Thermal camera setup failed")
+            }
+
         } catch (e: Exception) {
             Timber.e(e, "Failed to initialize IRCMD")
+            updateStatus("IRCMD Error: ${e.message}")
         }
     }
 
@@ -308,10 +331,13 @@ class ThermalCameraManager(
             outputStream?.write(finalFrame)
 
             // Notify frame callback
-            frameCallback?.invoke(finalFrame, timestampManager.getCurrentTimestamp())
+            thermalFrameCallback?.invoke(finalFrame, timestampManager.getCurrentTimestamp())
 
             // TODO: Option to save YUV image/video or ARGB
-            // saveFrameData(frame, finalFrame)
+            // This would allow saving both raw YUV422 data and processed ARGB frames
+            // saveFrameData(originalYUV = frame, processedARGB = finalFrame)
+            // - YUV422: Raw thermal data for post-processing
+            // - ARGB: Processed visual frames for immediate display
 
         } catch (e: Exception) {
             Timber.e(e, "Failed to process thermal frame")
@@ -328,11 +354,18 @@ class ThermalCameraManager(
 
     /**
      * Start temperature calibration (based on iOS documentation)
+     * 
+     * From iOS Development Notice: "Please start the shutter in the following rhythm:
+     * A countdown of 20 seconds: start the shutter at the countdown to 19s; start it again 
+     * at the countdown to 16s; start it again at the countdown to 13s; start it again at 
+     * the countdown to 8s; start it again at the countdown to 5s."
      */
     private fun startTemperatureCalibration() {
-        // Implement the 20-second calibration sequence from iOS docs:
-        // Start shutter at: 19s, 16s, 13s, 8s, 5s countdown
-
+        updateStatus("Starting temperature calibration (20s sequence)")
+        Timber.d("Starting Topdon temperature calibration sequence")
+        
+        // Calibration timing based on iOS documentation
+        // Countdown from 20s: trigger shutter at 19s, 16s, 13s, 8s, 5s
         val calibrationSequence = listOf(1000, 4000, 7000, 12000, 15000) // milliseconds
         var calibrationStep = 0
 
@@ -343,6 +376,13 @@ class ThermalCameraManager(
                 performShutterCalibration(calibrationStep++)
             }, delay.toLong())
         }
+        
+        // Final completion check after 20 seconds
+        calibrationHandler.postDelayed({
+            isCalibrated.set(true)
+            updateStatus("Temperature calibration complete")
+            Timber.d("Topdon temperature calibration sequence completed")
+        }, 20000L)
     }
 
     /**
@@ -371,12 +411,17 @@ class ThermalCameraManager(
 
     /**
      * Process temperature data
+     * TODO: Implement actual temperature processing using correct SDK methods
      */
     private fun processTemperatureData(rawFrame: ByteArray): ThermalFrame {
         return try {
-            // Use LibIRTemp for temperature conversion
+            // Placeholder implementation - actual SDK methods need to be determined
             val libIRTemp = com.infisense.iruvc.sdkisp.LibIRTemp()
-            val temperatureData = libIRTemp.convertToTemperature(rawFrame)
+            
+            // TODO: Replace with actual SDK temperature conversion methods
+            // The convertToTemperature method doesn't exist in the actual SDK
+            // Need to identify correct methods from SDK documentation
+            val temperatureData = DoubleArray(thermalResolution.first * thermalResolution.second) { 25.0 }
 
             ThermalFrame(
                 timestamp = timestampManager.getCurrentTimestamp(),
@@ -474,7 +519,7 @@ class ThermalCameraManager(
      * Set frame callback
      */
     fun setFrameCallback(callback: (ByteArray, Long) -> Unit) {
-        frameCallback = callback
+        thermalFrameCallback = callback
     }
 
     /**
