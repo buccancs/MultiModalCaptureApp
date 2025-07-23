@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Thermal camera body -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M4,4h16c1.1,0 2,0.9 2,2v12c0,1.1 -0.9,2 -2,2H4c-1.1,0 -2,-0.9 -2,-2V6C2,4.9 2.9,4 4,4z" />
+    
+    <!-- Thermal lens -->
+    <path
+        android:fillColor="@color/black"
+        android:pathData="M12,8c-2.2,0 -4,1.8 -4,4s1.8,4 4,4s4,-1.8 4,-4S14.2,8 12,8zM12,14c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2s2,0.9 2,2S13.1,14 12,14z" />
+    
+    <!-- Heat waves -->
+    <path
+        android:fillColor="@color/teal_200"
+        android:pathData="M6,12c0,-0.5 0.2,-1 0.5,-1.5c0.3,-0.5 0.5,-1 0.5,-1.5"
+        android:strokeWidth="1"
+        android:strokeColor="@color/teal_200" />
+    
+    <path
+        android:fillColor="@color/teal_200"
+        android:pathData="M18,12c0,-0.5 -0.2,-1 -0.5,-1.5c-0.3,-0.5 -0.5,-1 -0.5,-1.5"
+        android:strokeWidth="1"
+        android:strokeColor="@color/teal_200" />
+</vector>

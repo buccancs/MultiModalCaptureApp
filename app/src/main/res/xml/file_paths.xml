@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internal storage paths -->
+    <files-path name="internal_files" path="." />
+    
+    <!-- External storage paths for recordings -->
+    <external-files-path name="recordings" path="recordings/" />
+    <external-files-path name="sensor_data" path="sensor_data/" />
+    <external-files-path name="sessions" path="sessions/" />
+    <external-files-path name="exports" path="exports/" />
+    
+    <!-- Cache directory for temporary files -->
+    <external-cache-path name="temp_files" path="." />
+    
+    <!-- External storage root (for user-selected directories) -->
+    <external-path name="external_storage" path="." />
+    
+    <!-- Downloads directory for exported files -->
+    <external-path name="downloads" path="Download/" />
+</paths>

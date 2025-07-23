@@ -1,0 +1,111 @@
+<resources>
+    <string name="app_name">USB_IR</string>
+    <!-- main activity navigation -->
+    <string name="nav_usb_monitor">Test USBMonitor connect</string>
+    <string name="nav_ir_display">Image and IR display</string>
+    <string name="nav_ir_display_isp">USE ISP</string>
+    <string name="nav_ir_display_isp_gpu">USE GPU</string>
+    <string name="nav_ir_image_or_temp_display">Image/temp/Y16 display</string>
+    <string name="nav_tools">FM update,read,write..</string>
+    <!-- usb monitor connect activity -->
+    <string name="usb_monitor_tip">Test USBMonitor\'s plug-in process callback function, please note that the registration and de-registration must appear in pairs.</string>
+    <!-- title -->
+    <string name="pseudo_mode">Pseu</string>
+    <string name="temperature">Temp</string>
+    <string name="calibration">Cali</string>
+    <string name="image">Img</string>
+    <string name="information">Info</string>
+    <string name="top_menu_other">Oth</string>
+    <!-- pseudocolor  -->
+    <string name="color_p1">pseudo1</string>
+    <string name="color_p3">pseudo3</string>
+    <string name="color_p4">pseudo4</string>
+    <string name="color_p5">pseudo5</string>
+    <string name="color_p6">pseudo6</string>
+    <string name="color_p7">pseudo7</string>
+    <string name="color_p8">pseudo8</string>
+    <string name="color_p9">pseudo9</string>
+    <string name="color_p10">pseudo10</string>
+    <string name="color_p11">pseudo11</string>
+    <string name="color_p12">pseudo12</string>
+    <!-- temperature -->
+    <string name="temp_point">Point</string>
+    <string name="temp_line">Line</string>
+    <string name="temp_rect">Rect</string>
+    <string name="temp_all">Center</string>
+    <string name="temp_clear">Clear</string>
+    <!-- firmware update -->
+    <string name="restore_restart">Restart the module to take effect</string>
+    <string name="firmware_update">Firmware update</string>
+    <string name="state">State</string>
+    <string name="firmware_updating">Do not power off during the upgrade</string>
+    <string name="firmware_success">Success, power off and restart</string>
+    <string name="firmware_fail">Failure, error code:</string>
+    <string name="firmware_noconnect">Please check your device connection</string>
+    <!-- others -->
+    <string name="temp_correction">Secondary calibration</string>
+    <string name="currentVTemp">CurrentVTemp:</string>
+    <string name="shutterVTemp">ShutterVTemp:</string>
+    <string name="fps_status">FPS</string>
+    <string name="preview_start">Y16ModePreview</string>
+    <!-- image -->
+    <string name="temp_measure">cmd-Point&amp;line&amp;rect temp measure</string>
+    <string name="frame_temp">Frame max&amp;min temp</string>
+    <!-- -->
+    <string name="single_point_temperature">Single point calibration temp(units:K)</string>
+    <string name="low_temperature">Low temp(units:K)</string>
+    <string name="high_temperature">High temp(units:K)</string>
+    <string name="submit_low">Submit low temperature</string>
+    <string name="submit_high">Submit high temperature</string>
+    <string name="cancel_calibration">Cancel calibration,restore default</string>
+    <string name="multi_calibration1">Multi calibration Step1</string>
+    <string name="multi_calibration2">Step2</string>
+    <string name="multi_calibration3">Step3</string>
+    <string name="multi_calibration_one_temp_corrent_1">One temp correction step 1</string>
+    <string name="multi_calibration_one_temp_corrent_2">step 2</string>
+    <string name="pot_calibration">Pot calibration</string>
+    <string name="product_type">ProductType</string>
+    <string name="ready">Ready</string>
+    <string name="begin">Begin</string>
+    <string name="bad_pixel">Bad pixel X</string>
+    <string name="submit">Submit bad pix</string>
+    <string name="cancel">Cancel bad pix</string>
+    <string name="save_calibration">Save calibration</string>
+    <string name="restore_factory">Restore factory calibration</string>
+    <string name="auto_shutter">Auto shutter</string>
+    <string name="min_interval">Min interval</string>
+    <string name="max_interval">Max interval</string>
+    <string name="single_point_calibration">Single point calibration</string>
+    <string name="get_info">Get info</string>
+    <string name="save_parameters">Save parameters</string>
+    <string name="reset_parameters">Reset parameters</string>
+    <string name="address">Address</string>
+    <string name="data">Data</string>
+    <string name="read">Read</string>
+    <string name="write">Write</string>
+    <!-- -->
+    <string name="pic_save_success">Image saved successfully</string>
+    <string name="pic_save_fail">Failed to save image</string>
+    <string name="file_save_success">File saved successfully</string>
+    <!-- -->
+    <string name="OTG_confirm">Please make sure the OTG function is turned on\n\nThis SDK is suitable for P2, tiny1C, tinyBE, mini256 modules under the USB protocol, please do not use other modules to avoid damage to the module</string>
+    <string name="display_image_temp">Image+Temp</string>
+    <string name="display_image">Image</string>
+    <string name="display_temp">Mid Img Set</string>
+    <string name="data_loading">Loading data, please try again later</string>
+    <string name="any_interval_text">Any Interval</string>
+    <string name="protect_switch_text">Protect Switch</string>
+    <string name="protect_high_text">High Protect Value</string>
+    <string name="protect_low_text">Low Protect Value</string>
+    <string name="confirm_text">Confirm</string>
+    <string name="cancel_text">Cancel</string>
+    <string name="input_env_cor_param">Please input env cor param</string>
+    <string name="input_temp_param">Please input temp param</string>
+    <string name="ont_temp_correct_step_1">one point step1</string>
+    <string name="create_pixel">create pixel</string>
+    <string name="dpc_auto">auto dead pixel calibration</string>
+    <string name="custom_pseudo_create">create custom pseudo</string>
+    <string name="custom_pseudo_convert">pseudo type convert</string>
+    <string name="input_correct_param">Please input the correction temp(℃) in order、ems(0-1)、ta(℃)，tu(℃)，distance(m)，hum(0-1)</string>
+
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    
+    <!-- Secondary colors -->
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    
+    <!-- Basic colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray">#FF808080</color>
+    <color name="light_gray">#FFD3D3D3</color>
+    <color name="dark_gray">#FF404040</color>
+    
+    <!-- Status colors -->
+    <color name="status_connected">#FF4CAF50</color>
+    <color name="status_disconnected">#FFF44336</color>
+    <color name="status_recording">#FFFF5722</color>
+    <color name="status_ready">#FF2196F3</color>
+    <color name="status_warning">#FFFF9800</color>
+    
+    <!-- Recording button colors -->
+    <color name="record_start">#FF4CAF50</color>
+    <color name="record_stop">#FFF44336</color>
+    
+    <!-- Sensor value colors -->
+    <color name="sensor_background">#1A000000</color>
+    <color name="sensor_text">#FF333333</color>
+    
+    <!-- Preview overlay colors -->
+    <color name="overlay_background">#80000000</color>
+    <color name="overlay_text">#FFFFFFFF</color>
+</resources>

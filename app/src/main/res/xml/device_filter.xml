@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- USB device filter for Topdon TC001 thermal camera -->
+    <!-- Note: These are placeholder values - actual vendor-id and product-id 
+         need to be obtained from Topdon TC001 specifications -->
+    <usb-device vendor-id="0x1234" product-id="0x5678" />
+    
+    <!-- Generic thermal camera devices (if needed for testing) -->
+    <!-- <usb-device class="14" subclass="1" protocol="0" /> -->
+    
+    <!-- Additional USB thermal imaging devices can be added here -->
+    <!-- Example for FLIR devices (if compatible): -->
+    <!-- <usb-device vendor-id="0x09cb" /> -->
+</resources>

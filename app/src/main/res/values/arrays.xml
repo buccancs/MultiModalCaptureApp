@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <!-- Video Quality Options -->
+    <string-array name="video_quality_entries">
+        <item>Ultra HD (4K)</item>
+        <item>Full HD (1080p)</item>
+        <item>HD (720p)</item>
+        <item>Standard (480p)</item>
+        <item>Low (360p)</item>
+    </string-array>
+    
+    <string-array name="video_quality_values">
+        <item>UHD</item>
+        <item>FHD</item>
+        <item>HD</item>
+        <item>SD</item>
+        <item>LOW</item>
+    </string-array>
+    
+    <!-- Audio Quality Options -->
+    <string-array name="audio_quality_entries">
+        <item>Studio Quality (48 kHz)</item>
+        <item>CD Quality (44.1 kHz)</item>
+        <item>High Quality (32 kHz)</item>
+        <item>Standard Quality (22 kHz)</item>
+        <item>Low Quality (16 kHz)</item>
+    </string-array>
+    
+    <string-array name="audio_quality_values">
+        <item>48000</item>
+        <item>44100</item>
+        <item>32000</item>
+        <item>22050</item>
+        <item>16000</item>
+    </string-array>
+    
+    <!-- GSR Sample Rate Options -->
+    <string-array name="gsr_sample_rate_entries">
+        <item>256 Hz (High Performance)</item>
+        <item>128 Hz (Recommended)</item>
+        <item>64 Hz (Standard)</item>
+        <item>32 Hz (Low Power)</item>
+        <item>16 Hz (Minimal)</item>
+    </string-array>
+    
+    <string-array name="gsr_sample_rate_values">
+        <item>256</item>
+        <item>128</item>
+        <item>64</item>
+        <item>32</item>
+        <item>16</item>
+    </string-array>
+    
+    <!-- Thermal Camera Frame Rate Options -->
+    <string-array name="thermal_frame_rate_entries">
+        <item>30 FPS (High)</item>
+        <item>25 FPS (Standard)</item>
+        <item>15 FPS (Low Power)</item>
+        <item>10 FPS (Minimal)</item>
+    </string-array>
+    
+    <string-array name="thermal_frame_rate_values">
+        <item>30</item>
+        <item>25</item>
+        <item>15</item>
+        <item>10</item>
+    </string-array>
+    
+    <!-- Storage Location Options -->
+    <string-array name="storage_location_entries">
+        <item>Internal Storage</item>
+        <item>External SD Card</item>
+        <item>Custom Directory</item>
+    </string-array>
+    
+    <string-array name="storage_location_values">
+        <item>internal</item>
+        <item>external</item>
+        <item>custom</item>
+    </string-array>
+    
+    <!-- Network Protocol Options -->
+    <string-array name="network_protocol_entries">
+        <item>TCP (Reliable)</item>
+        <item>UDP (Fast)</item>
+        <item>WebSocket (Web Compatible)</item>
+    </string-array>
+    
+    <string-array name="network_protocol_values">
+        <item>tcp</item>
+        <item>udp</item>
+        <item>websocket</item>
+    </string-array>
+    
+    <!-- Data Export Format Options -->
+    <string-array name="export_format_entries">
+        <item>CSV (Comma Separated)</item>
+        <item>JSON (JavaScript Object)</item>
+        <item>XML (Extensible Markup)</item>
+        <item>HDF5 (Scientific Data)</item>
+        <item>MATLAB (.mat)</item>
+    </string-array>
+    
+    <string-array name="export_format_values">
+        <item>csv</item>
+        <item>json</item>
+        <item>xml</item>
+        <item>hdf5</item>
+        <item>mat</item>
+    </string-array>
+    
+</resources>

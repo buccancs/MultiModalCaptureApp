@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">IR SDK FRAME</string>
+    <string name="app_notice">This project is an SDK frame template and does not contain specific functions. Please check the demo corresponding to the SDK in the corresponding project.</string>
+</resources>

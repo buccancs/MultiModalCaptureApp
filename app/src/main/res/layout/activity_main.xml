@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".MainActivity">
+
+    <!-- Camera Preview Container -->
+    <FrameLayout
+        android:id="@+id/preview_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/dark_gray"
+        app:layout_constraintDimensionRatio="4:3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.9">
+
+        <!-- RGB Camera Preview -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+
+        <!-- Thermal Camera Preview (placeholder) -->
+        <ImageView
+            android:id="@+id/thermal_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            tools:src="@color/purple_200" />
+
+        <!-- Preview Mode Toggle Button -->
+        <Button
+            android:id="@+id/btn_preview_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="16dp"
+            android:text="@string/preview_mode_rgb"
+            android:textSize="12sp" />
+
+    </FrameLayout>
+
+    <!-- Status Panel -->
+    <LinearLayout
+        android:id="@+id/status_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@color/overlay_background"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/preview_container">
+
+        <!-- Status Row 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_camera_status"
+                style="@style/StatusIndicatorStyle"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_camera"
+                android:drawableTint="@color/status_ready"
+                android:text="@string/status_camera_ready"
+                android:textColor="@color/overlay_text" />
+
+            <TextView
+                android:id="@+id/tv_thermal_status"
+                style="@style/StatusIndicatorStyle"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_thermal"
+                android:drawableTint="@color/status_disconnected"
+                android:text="@string/status_thermal_disconnected"
+                android:textColor="@color/overlay_text" />
+
+        </LinearLayout>
+
+        <!-- Status Row 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_gsr_status"
+                style="@style/StatusIndicatorStyle"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_sensor"
+                android:drawableTint="@color/status_disconnected"
+                android:text="@string/status_gsr_disconnected"
+                android:textColor="@color/overlay_text" />
+
+            <TextView
+                android:id="@+id/tv_network_status"
+                style="@style/StatusIndicatorStyle"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_network"
+                android:drawableTint="@color/status_disconnected"
+                android:text="@string/status_network_disconnected"
+                android:textColor="@color/overlay_text" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Sensor Values Panel -->
+    <LinearLayout
+        android:id="@+id/sensor_values_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/status_panel">
+
+        <TextView
+            android:id="@+id/tv_gsr_value"
+            style="@style/SensorValueStyle"
+            android:layout_marginEnd="16dp"
+            android:text="GSR: -- μS"
+            android:textColor="@color/sensor_text" />
+
+        <TextView
+            android:id="@+id/tv_heart_rate"
+            style="@style/SensorValueStyle"
+            android:text="HR: -- BPM"
+            android:textColor="@color/sensor_text" />
+
+    </LinearLayout>
+
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:id="@+id/control_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sensor_values_panel">
+
+        <!-- Main Recording Button -->
+        <Button
+            android:id="@+id/btn_recording_control"
+            style="@style/RecordingButtonStyle"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/record_start"
+            android:text="@string/start_recording" />
+
+        <!-- Secondary Controls -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_bluetooth_scan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="@string/bluetooth_scan"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_settings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

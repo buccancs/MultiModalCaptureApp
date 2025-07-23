@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MultiModal Capture</string>
+    
+    <!-- Main UI strings -->
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="preview_mode_rgb">RGB Camera</string>
+    <string name="preview_mode_thermal">Thermal Camera</string>
+    
+    <!-- Status strings -->
+    <string name="status_camera_ready">Camera Ready</string>
+    <string name="status_camera_recording">Camera Recording</string>
+    <string name="status_thermal_connected">Thermal Camera Connected</string>
+    <string name="status_thermal_disconnected">Thermal Camera Disconnected</string>
+    <string name="status_gsr_connected">GSR Sensor Connected</string>
+    <string name="status_gsr_disconnected">GSR Sensor Disconnected</string>
+    <string name="status_audio_recording">Audio Recording</string>
+    <string name="status_network_connected">PC Connected</string>
+    <string name="status_network_disconnected">PC Disconnected</string>
+    
+    <!-- Sensor data strings -->
+    <string name="gsr_value">GSR: %1$.2f μS</string>
+    <string name="heart_rate_value">HR: %1$d BPM</string>
+    <string name="packet_reception_rate">PRR: %1$.1f%%</string>
+    
+    <!-- Error messages -->
+    <string name="error_camera_permission">Camera permission required</string>
+    <string name="error_audio_permission">Audio recording permission required</string>
+    <string name="error_bluetooth_permission">Bluetooth permission required</string>
+    <string name="error_storage_permission">Storage permission required</string>
+    <string name="error_camera_unavailable">Camera unavailable</string>
+    <string name="error_thermal_connection">Failed to connect to thermal camera</string>
+    <string name="error_gsr_connection">Failed to connect to GSR sensor</string>
+    <string name="error_network_connection">Failed to connect to PC</string>
+    <string name="error_recording_failed">Recording failed</string>
+    <string name="error_insufficient_storage">Insufficient storage space</string>
+    
+    <!-- Bluetooth pairing -->
+    <string name="bluetooth_scan">Scan for Devices</string>
+    <string name="bluetooth_pair">Pair Device</string>
+    <string name="bluetooth_connecting">Connecting...</string>
+    <string name="bluetooth_connected">Connected</string>
+    <string name="bluetooth_disconnected">Disconnected</string>
+    
+    <!-- Settings -->
+    <string name="settings_simulation_mode">Simulation Mode</string>
+    <string name="settings_video_quality">Video Quality</string>
+    <string name="settings_audio_quality">Audio Quality</string>
+    <string name="settings_gsr_sample_rate">GSR Sample Rate</string>
+    <string name="settings_session_id">Session ID</string>
+    
+    <!-- File management -->
+    <string name="file_saved">File saved: %1$s</string>
+    <string name="files_exported">Files exported successfully</string>
+    
+    <!-- Notifications -->
+    <string name="notification_recording_title">MultiModal Recording</string>
+    <string name="notification_recording_text">Recording in progress...</string>
+    <string name="notification_channel_recording">Recording Service</string>
+    <string name="notification_channel_recording_desc">Notifications for recording service</string>
+</resources>

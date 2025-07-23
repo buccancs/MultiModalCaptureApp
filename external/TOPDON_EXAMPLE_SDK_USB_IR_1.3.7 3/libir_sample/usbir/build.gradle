@@ -1,0 +1,81 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk rootProject.ext.android.compileSdkVer
+
+    defaultConfig {
+        applicationId "com.infisense.usbir"
+        minSdk rootProject.ext.android.minSdkVer
+        targetSdk rootProject.ext.android.targetSdkVer //For specific configuration, please refer to the target Sdk section of <Instructions> in the README file
+        versionCode rootProject.ext.android.versionCodeUSBIR
+        versionName rootProject.ext.android.versionNameUSBIR +
+                "${new Date().format(".yyMMddHH", TimeZone.getTimeZone("GMT+08:00"))}${isReleaseVersion.toBoolean() ? "" : debugVersionInfo}"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // 生成包含指定平台的so库的apk
+        ndk {
+//            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+            abiFilters 'arm64-v8a', 'armeabi', 'armeabi-v7a'
+        }
+
+        // gradle.properties中配置项
+        resValue("bool", 'isReleaseVersion', isReleaseVersion)
+        resValue("string", 'debugVersionInfo', debugVersionInfo)
+        buildConfigField("boolean", 'isStandardSDK', "${isStandardSDK}")
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            zipAlignEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            zipAlignEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 启用viewBinding
+    viewBinding {
+        enabled = true
+    }
+
+    // 配置NDK版本
+    ndkVersion rootProject.ext.android.ndkVersion
+
+    // 修改生成的apk的名字
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "USB_IR_${new Date().format("yyMMddHHmm", TimeZone.getTimeZone("GMT+08:00"))}${isReleaseVersion.toBoolean() ? "" : debugVersionInfo}${isStandardSDK.toBoolean() ? "_STANDARD" : "_CUSTOM"}.apk"
+        }
+    }
+
+}
+
+dependencies {
+    // use jar or aar
+  implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    // base
+    implementation roots.appcompat
+    implementation roots.material
+    testImplementation roots.junit
+    androidTestImplementation roots["ext-junit"]
+    androidTestImplementation roots["espresso-core"]
+    implementation roots.constraintlayout
+    // kotlin
+    implementation roots["kotlin"]
+    implementation thirdFrame["fastjson"]
+    // dokitx
+    releaseImplementation thirdFrame["dokitx-no-op"]
+    debugImplementation thirdFrame["dokitx"]
+    // add library,use sdk source
+    //   implementation project(path: ':cameralibrary')
+
+}

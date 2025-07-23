@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:keepScreenOn="true">
+
+    <com.infisense.usbir.view.CameraView
+        android:id="@+id/cameraView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/llDataFlowMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/llY16ModePreview"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <!-- 打快门，出图后模糊可以手动打快门 -->
+        <ImageView
+            android:id="@+id/manualShutButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="5dp"
+            android:background="@mipmap/shutter"
+            android:foreground="?selectableItemBackground" />
+
+        <Button
+            android:id="@+id/btnImageTemp"
+            style="@style/myBtnStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/display_image_temp" />
+
+        <Button
+            android:id="@+id/btnImage"
+            style="@style/myBtnStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/display_image" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llY16ModePreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Spinner
+            android:id="@+id/ParamY16ModeType"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dialog" />
+
+        <Button
+            android:id="@+id/btnY16ModeSet"
+            style="@style/myBtnStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/display_temp" />
+    </LinearLayout>
+
+</RelativeLayout>

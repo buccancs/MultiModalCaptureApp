@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include basic app preferences only -->
+    <include domain="sharedpref" path="." />
+    <include domain="file" path="." />
+    <include domain="database" path="." />
+    
+    <!-- Exclude sensitive recording data -->
+    <exclude domain="file" path="recordings" />
+    <exclude domain="file" path="sensor_data" />
+    <exclude domain="file" path="sessions" />
+    <exclude domain="file" path="temp" />
+    <exclude domain="file" path="cache" />
+</full-backup-content>

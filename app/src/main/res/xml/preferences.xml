@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Recording Settings Category -->
+    <PreferenceCategory
+        android:title="Recording Settings"
+        android:icon="@drawable/ic_camera">
+
+        <ListPreference
+            android:key="video_quality"
+            android:title="@string/settings_video_quality"
+            android:summary="Select video recording quality"
+            android:entries="@array/video_quality_entries"
+            android:entryValues="@array/video_quality_values"
+            android:defaultValue="HD"
+            android:icon="@drawable/ic_camera" />
+
+        <ListPreference
+            android:key="audio_quality"
+            android:title="@string/settings_audio_quality"
+            android:summary="Select audio recording quality"
+            android:entries="@array/audio_quality_entries"
+            android:entryValues="@array/audio_quality_values"
+            android:defaultValue="44100"
+            android:icon="@drawable/ic_camera" />
+
+        <EditTextPreference
+            android:key="session_id_prefix"
+            android:title="@string/settings_session_id"
+            android:summary="Default prefix for session IDs"
+            android:defaultValue="Session"
+            android:inputType="text" />
+
+    </PreferenceCategory>
+
+    <!-- Sensor Settings Category -->
+    <PreferenceCategory
+        android:title="Sensor Settings"
+        android:icon="@drawable/ic_sensor">
+
+        <ListPreference
+            android:key="gsr_sample_rate"
+            android:title="@string/settings_gsr_sample_rate"
+            android:summary="GSR sensor sampling rate"
+            android:entries="@array/gsr_sample_rate_entries"
+            android:entryValues="@array/gsr_sample_rate_values"
+            android:defaultValue="128"
+            android:icon="@drawable/ic_sensor" />
+
+        <SwitchPreferenceCompat
+            android:key="enable_ppg_heart_rate"
+            android:title="Enable PPG Heart Rate"
+            android:summary="Calculate heart rate from PPG signal"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_sensor" />
+
+        <SwitchPreferenceCompat
+            android:key="auto_reconnect_sensors"
+            android:title="Auto-reconnect Sensors"
+            android:summary="Automatically reconnect to sensors if connection is lost"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_network" />
+
+    </PreferenceCategory>
+
+    <!-- Network Settings Category -->
+    <PreferenceCategory
+        android:title="Network Settings"
+        android:icon="@drawable/ic_network">
+
+        <EditTextPreference
+            android:key="pc_server_port"
+            android:title="PC Server Port"
+            android:summary="Port for PC communication"
+            android:defaultValue="8888"
+            android:inputType="number" />
+
+        <EditTextPreference
+            android:key="discovery_port"
+            android:title="Discovery Port"
+            android:summary="Port for device discovery"
+            android:defaultValue="8889"
+            android:inputType="number" />
+
+        <SwitchPreferenceCompat
+            android:key="enable_network_discovery"
+            android:title="Enable Network Discovery"
+            android:summary="Allow PC to discover this device"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_network" />
+
+    </PreferenceCategory>
+
+    <!-- Development Settings Category -->
+    <PreferenceCategory
+        android:title="Development Settings"
+        android:icon="@drawable/ic_camera">
+
+        <SwitchPreferenceCompat
+            android:key="simulation_mode"
+            android:title="@string/settings_simulation_mode"
+            android:summary="Use simulated data when hardware is not available"
+            android:defaultValue="false"
+            android:icon="@drawable/ic_camera" />
+
+        <SwitchPreferenceCompat
+            android:key="enable_debug_logging"
+            android:title="Enable Debug Logging"
+            android:summary="Enable detailed logging for troubleshooting"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="show_performance_stats"
+            android:title="Show Performance Stats"
+            android:summary="Display real-time performance information"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <!-- Storage Settings Category -->
+    <PreferenceCategory
+        android:title="Storage Settings"
+        android:icon="@drawable/ic_camera">
+
+        <Preference
+            android:key="storage_location"
+            android:title="Storage Location"
+            android:summary="Choose where to save recordings"
+            android:icon="@drawable/ic_camera" />
+
+        <SwitchPreferenceCompat
+            android:key="auto_cleanup_old_files"
+            android:title="Auto-cleanup Old Files"
+            android:summary="Automatically delete recordings older than 30 days"
+            android:defaultValue="false" />
+
+        <Preference
+            android:key="clear_all_data"
+            android:title="Clear All Data"
+            android:summary="Delete all recorded sessions and data"
+            android:icon="@drawable/ic_camera" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

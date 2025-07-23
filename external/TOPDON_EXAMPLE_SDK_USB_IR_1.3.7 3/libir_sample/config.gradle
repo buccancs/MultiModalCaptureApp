@@ -1,0 +1,58 @@
+/* 必须ext，定义所有project公用参数 */
+ext {
+
+    //===
+    android = [
+            compileSdkVer       : 31,// 用于编译的SDK版本
+            buildToolsVer       : "29.0.3",// 用于Gradle编译项目的工具版本
+            // SDK version info
+            versionCodeUSBIR    : 137,
+            versionNameUSBIR    : "1.3.7",
+            versionCodeMINI640  : 127,
+            versionNameMINI640  : "1.2.7",
+            versionCodeMINI640V2: 212,
+            versionNameMINI640V2: "2.1.2",
+            versionCodeUSBDual  : 128,
+            versionNameUSBDual  : "1.2.8",
+            versionCodeSPIIR    : 128,
+            versionNameSPIIR    : "1.2.8",
+            versionCodeSPIDual  : 125,
+            versionNameSPIDual  : "1.2.5",
+            versionCodeCamLib   : 126,
+            versionNameCamLib   : "1.2.6",
+            //
+            minSdkVer           : 23,// 最低支持Android版本
+            targetSdkVer        : 26,// 目标版本(和刘工SDK的版本保持一致，避免一些兼容问题)
+            //
+            ndkVersion          : "21.1.6352462",
+    ]
+
+    //=== 公共的(系统提供)
+    roots = [
+            //项目基本的(每个项目需要的)
+            "appcompat"       : "androidx.appcompat:appcompat:1.4.1",
+            "material"        : "com.google.android.material:material:1.5.0",
+            "constraintlayout": "androidx.constraintlayout:constraintlayout:2.1.3",
+            "junit"           : "junit:junit:4.13.2",
+            "ext-junit"       : "androidx.test.ext:junit:1.1.3",
+            "espresso-core"   : "androidx.test.espresso:espresso-core:3.4.0",
+            "kotlin"          : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.21",
+    ]
+
+    //=== 第三方框架
+    thirdFrame = [
+            // butterknife
+            // https://github.com/JakeWharton/butterknife
+            "butterknife"         : "com.jakewharton:butterknife:10.2.3",
+            "butterknife-compiler": "com.jakewharton:butterknife-compiler:10.2.3",
+
+            // dokitx
+            // https://xingyun.xiaojukeji.com/docs/dokit/#/androidGuide
+            "dokitx"              : "io.github.didi.dokit:dokitx:3.7.11",
+            "dokitx-no-op"        : "io.github.didi.dokit:dokitx-no-op:3.7.11",
+
+            // fastjson
+            // 更新到2.0.28之后，提示：MethodHandle.invoke and MethodHandle.invokeExact are only supported starting with Android O (--min-api 26)
+            "fastjson"            : "com.alibaba:fastjson:1.2.76",
+    ]
+}

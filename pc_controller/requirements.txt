@@ -1,0 +1,34 @@
+# PC Controller Application Dependencies
+# Core GUI Framework
+PyQt6>=6.5.0
+
+# Networking and Communication
+requests>=2.31.0
+websockets>=11.0.2
+aiohttp>=3.8.5
+
+# Data Processing and Analysis
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+
+# Video and Multimedia
+opencv-python>=4.8.0
+PyQt6-Multimedia>=6.5.0
+
+# Configuration and Logging
+pyyaml>=6.0
+colorlog>=6.7.0
+
+# System and Platform Support
+psutil>=5.9.0
+platform-specific>=0.1.0
+
+# Optional: Lab Streaming Layer Integration
+# pylsl>=1.16.0
+
+# Development and Testing
+pytest>=7.4.0
+pytest-qt>=4.2.0
+black>=23.0.0
+flake8>=6.0.0
