@@ -403,9 +403,9 @@ class DeviceManager(QObject):
         """Scan for WiFi networks using system commands."""
         try:
             if platform.system() == "Windows":
-                # Use netsh to scan for available WiFi networks
+                # Use netsh to scan for WiFi networks
                 result = subprocess.run([
-                    "netsh", "wlan", "show", "networks", "mode=bssid"
+                    "netsh", "wlan", "show", "profiles"
                 ], capture_output=True, text=True, timeout=10)
                 
                 if result.returncode == 0:
@@ -466,103 +466,24 @@ class DeviceManager(QObject):
             logging.debug(f"Error parsing bluetoothctl output: {e}")
     
     def _parse_windows_wifi_output(self, output: str):
-        """Parse Windows netsh WiFi networks output."""
+        """Parse Windows netsh WiFi output."""
         try:
             lines = output.strip().split('\n')
-            current_network = {}
-            
             for line in lines:
-                line = line.strip()
-                
-                # Look for SSID line
-                if line.startswith("SSID") and ":" in line:
-                    # If we have a previous network, process it
-                    if current_network and current_network.get("ssid"):
-                        self._create_wifi_device_from_netsh_data(current_network)
-                    
-                    # Start new network
-                    ssid = line.split(":", 1)[1].strip()
-                    if ssid:  # Skip empty SSIDs
-                        current_network = {"ssid": ssid}
-                
-                # Look for network type/authentication
-                elif line.startswith("Network type") and ":" in line:
-                    network_type = line.split(":", 1)[1].strip()
-                    current_network["network_type"] = network_type
-                
-                elif line.startswith("Authentication") and ":" in line:
-                    auth = line.split(":", 1)[1].strip()
-                    current_network["authentication"] = auth
-                
-                elif line.startswith("Encryption") and ":" in line:
-                    encryption = line.split(":", 1)[1].strip()
-                    current_network["encryption"] = encryption
-                
-                # Look for BSSID
-                elif line.startswith("BSSID") and ":" in line:
-                    bssid = line.split(":", 1)[1].strip()
-                    current_network["bssid"] = bssid
-                
-                # Look for signal strength
-                elif line.startswith("Signal") and ":" in line:
-                    signal = line.split(":", 1)[1].strip()
-                    current_network["signal"] = signal
-                
-                # Look for radio type/frequency
-                elif line.startswith("Radio type") and ":" in line:
-                    radio_type = line.split(":", 1)[1].strip()
-                    current_network["radio_type"] = radio_type
-                
-                elif line.startswith("Channel") and ":" in line:
-                    channel = line.split(":", 1)[1].strip()
-                    current_network["channel"] = channel
-            
-            # Process the last network if exists
-            if current_network and current_network.get("ssid"):
-                self._create_wifi_device_from_netsh_data(current_network)
-                
+                if "All User Profile" in line:
+                    # Extract SSID from the line
+                    ssid = line.split(':')[-1].strip()
+                    if ssid:
+                        device = WiFiDevice(
+                            device_id=f"wifi_{ssid.replace(' ', '_')}",
+                            device_name=ssid,
+                            bssid="Unknown",
+                            security="Unknown"
+                        )
+                        
+                        self._add_discovered_device(device)
         except Exception as e:
             logging.debug(f"Error parsing Windows WiFi output: {e}")
-    
-    def _create_wifi_device_from_netsh_data(self, network_data: dict):
-        """Create WiFi device from parsed netsh network data."""
-        ssid = network_data.get("ssid", "Unknown")
-        bssid = network_data.get("bssid", "Unknown")
-        
-        if ssid and ssid != "Unknown":
-            # Create security string from authentication and encryption
-            auth = network_data.get("authentication", "Unknown")
-            encryption = network_data.get("encryption", "Unknown")
-            security = f"{auth}/{encryption}" if auth != "Unknown" and encryption != "Unknown" else "Unknown"
-            
-            # Extract signal strength number if available
-            signal_str = network_data.get("signal", "")
-            signal_strength = None
-            if signal_str and "%" in signal_str:
-                try:
-                    # Extract percentage and convert to approximate dBm
-                    percentage = int(signal_str.replace("%", "").strip())
-                    # Rough conversion: 100% ≈ -30dBm, 0% ≈ -90dBm
-                    signal_strength = -90 + (percentage * 0.6)
-                except:
-                    pass
-            
-            # Create frequency info from radio type and channel
-            frequency = network_data.get("radio_type", "")
-            channel = network_data.get("channel", "")
-            if channel:
-                frequency = f"{frequency} Ch{channel}" if frequency else f"Ch{channel}"
-            
-            device = WiFiDevice(
-                device_id=f"wifi_{ssid.replace(' ', '_')}_{bssid.replace(':', '')}",
-                device_name=ssid,
-                bssid=bssid,
-                security=security,
-                signal_strength=int(signal_strength) if signal_strength else None,
-                frequency=frequency if frequency else None
-            )
-            
-            self._add_discovered_device(device)
     
     def _parse_iwlist_output(self, output: str):
         """Parse iwlist scan output."""

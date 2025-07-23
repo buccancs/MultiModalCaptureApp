@@ -1,0 +1,2660 @@
+{
+  "report_generated_at": "2025-07-23T06:46:17.692640",
+  "total_devices_tested": 2,
+  "device_results": {
+    "device_001": {
+      "device_id": "device_001",
+      "test_duration_seconds": 30.0,
+      "wifi_avg_latency_ms": 0.0,
+      "bluetooth_avg_latency_ms": 141.2529001633326,
+      "wifi_success_rate": 0.0,
+      "bluetooth_success_rate": 100.0,
+      "recommended_method": "bluetooth",
+      "wifi_measurements_count": 72,
+      "bluetooth_measurements_count": 48,
+      "wifi_measurements": [
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249505.6669767,
+          "receive_timestamp": 1753249505.6669767,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249505.6669767,
+          "receive_timestamp": 1753249505.6669767,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249505.6669767,
+          "receive_timestamp": 1753249505.6669767,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249506.951814,
+          "receive_timestamp": 1753249506.951814,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249506.951814,
+          "receive_timestamp": 1753249506.951814,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249506.951814,
+          "receive_timestamp": 1753249506.951814,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249508.2379003,
+          "receive_timestamp": 1753249508.2379003,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249508.2379003,
+          "receive_timestamp": 1753249508.2379003,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249508.2379003,
+          "receive_timestamp": 1753249508.2379003,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249509.5366127,
+          "receive_timestamp": 1753249509.5366127,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249509.5366127,
+          "receive_timestamp": 1753249509.5366127,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249509.5366127,
+          "receive_timestamp": 1753249509.5366127,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249510.8104517,
+          "receive_timestamp": 1753249510.8104517,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249510.8104517,
+          "receive_timestamp": 1753249510.8104517,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249510.8104517,
+          "receive_timestamp": 1753249510.8104517,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249512.0993087,
+          "receive_timestamp": 1753249512.0993087,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249512.0993087,
+          "receive_timestamp": 1753249512.0993087,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249512.0993087,
+          "receive_timestamp": 1753249512.0993087,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249513.388512,
+          "receive_timestamp": 1753249513.388512,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249513.388512,
+          "receive_timestamp": 1753249513.388512,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249513.388512,
+          "receive_timestamp": 1753249513.388512,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249514.677318,
+          "receive_timestamp": 1753249514.677318,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249514.677318,
+          "receive_timestamp": 1753249514.677318,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249514.677318,
+          "receive_timestamp": 1753249514.677318,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249515.9633684,
+          "receive_timestamp": 1753249515.9633684,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249515.9633684,
+          "receive_timestamp": 1753249515.9633684,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249515.9633684,
+          "receive_timestamp": 1753249515.9633684,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249517.2492623,
+          "receive_timestamp": 1753249517.2492623,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249517.2492623,
+          "receive_timestamp": 1753249517.2492623,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249517.2492623,
+          "receive_timestamp": 1753249517.2492623,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249518.5324225,
+          "receive_timestamp": 1753249518.5324225,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249518.5324225,
+          "receive_timestamp": 1753249518.5324225,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249518.5324225,
+          "receive_timestamp": 1753249518.5324225,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249519.8140829,
+          "receive_timestamp": 1753249519.8140829,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249519.8140829,
+          "receive_timestamp": 1753249519.8140829,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249519.815083,
+          "receive_timestamp": 1753249519.815083,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249521.1060867,
+          "receive_timestamp": 1753249521.1060867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249521.1060867,
+          "receive_timestamp": 1753249521.1060867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249521.1060867,
+          "receive_timestamp": 1753249521.1060867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249522.393646,
+          "receive_timestamp": 1753249522.393646,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249522.393646,
+          "receive_timestamp": 1753249522.393646,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249522.393646,
+          "receive_timestamp": 1753249522.393646,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249523.6830728,
+          "receive_timestamp": 1753249523.6830728,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249523.6830728,
+          "receive_timestamp": 1753249523.6830728,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249523.6830728,
+          "receive_timestamp": 1753249523.6830728,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249524.972048,
+          "receive_timestamp": 1753249524.972048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249524.972048,
+          "receive_timestamp": 1753249524.972048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249524.972048,
+          "receive_timestamp": 1753249524.972048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249526.2668953,
+          "receive_timestamp": 1753249526.2668953,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249526.2668953,
+          "receive_timestamp": 1753249526.2668953,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249526.2668953,
+          "receive_timestamp": 1753249526.2668953,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249527.5639734,
+          "receive_timestamp": 1753249527.5639734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249527.5639734,
+          "receive_timestamp": 1753249527.5639734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249527.5639734,
+          "receive_timestamp": 1753249527.5639734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249528.8468444,
+          "receive_timestamp": 1753249528.8468444,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249528.8468444,
+          "receive_timestamp": 1753249528.8468444,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249528.8468444,
+          "receive_timestamp": 1753249528.8468444,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249530.1417544,
+          "receive_timestamp": 1753249530.1417544,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249530.1417544,
+          "receive_timestamp": 1753249530.1417544,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249530.1417544,
+          "receive_timestamp": 1753249530.1417544,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249531.4266512,
+          "receive_timestamp": 1753249531.4266512,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249531.4266512,
+          "receive_timestamp": 1753249531.4266512,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249531.4278948,
+          "receive_timestamp": 1753249531.4278948,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249532.7190108,
+          "receive_timestamp": 1753249532.7190108,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249532.7190108,
+          "receive_timestamp": 1753249532.7190108,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249532.7190108,
+          "receive_timestamp": 1753249532.7190108,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249534.0082986,
+          "receive_timestamp": 1753249534.0082986,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249534.0082986,
+          "receive_timestamp": 1753249534.0082986,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249534.0082986,
+          "receive_timestamp": 1753249534.0082986,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249535.2962284,
+          "receive_timestamp": 1753249535.2962284,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249535.2962284,
+          "receive_timestamp": 1753249535.2962284,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249535.2962284,
+          "receive_timestamp": 1753249535.2962284,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        }
+      ],
+      "bluetooth_measurements": [
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249505.6669767,
+          "receive_timestamp": 1753249505.8250222,
+          "latency_ms": 158.04553031921387,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249505.8250222,
+          "receive_timestamp": 1753249505.9505048,
+          "latency_ms": 125.48255920410156,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249506.951814,
+          "receive_timestamp": 1753249507.1068757,
+          "latency_ms": 155.0617218017578,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249507.1068757,
+          "receive_timestamp": 1753249507.2320209,
+          "latency_ms": 125.14519691467285,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249508.2389045,
+          "receive_timestamp": 1753249508.394648,
+          "latency_ms": 155.74359893798828,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249508.394648,
+          "receive_timestamp": 1753249508.5211465,
+          "latency_ms": 126.49846076965332,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249509.5366127,
+          "receive_timestamp": 1753249509.693869,
+          "latency_ms": 157.2563648223877,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249509.693869,
+          "receive_timestamp": 1753249509.8195813,
+          "latency_ms": 125.71215629577637,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249510.8104517,
+          "receive_timestamp": 1753249510.9681828,
+          "latency_ms": 157.7310562133789,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249510.9681828,
+          "receive_timestamp": 1753249511.0929039,
+          "latency_ms": 124.72105026245117,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249512.0993087,
+          "receive_timestamp": 1753249512.2566311,
+          "latency_ms": 157.32240676879883,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249512.2566311,
+          "receive_timestamp": 1753249512.383741,
+          "latency_ms": 127.10976600646973,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249513.388512,
+          "receive_timestamp": 1753249513.5468092,
+          "latency_ms": 158.29730033874512,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249513.5468092,
+          "receive_timestamp": 1753249513.672994,
+          "latency_ms": 126.18470191955566,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249514.677318,
+          "receive_timestamp": 1753249514.8353333,
+          "latency_ms": 158.01525115966797,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249514.8353333,
+          "receive_timestamp": 1753249514.9601336,
+          "latency_ms": 124.80020523071289,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249515.9633684,
+          "receive_timestamp": 1753249516.1208258,
+          "latency_ms": 157.4573516845703,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249516.1208258,
+          "receive_timestamp": 1753249516.2464595,
+          "latency_ms": 125.63371658325195,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249517.2492623,
+          "receive_timestamp": 1753249517.4054663,
+          "latency_ms": 156.2039852142334,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249517.4054663,
+          "receive_timestamp": 1753249517.5297925,
+          "latency_ms": 124.32622909545898,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249518.5324225,
+          "receive_timestamp": 1753249518.6878037,
+          "latency_ms": 155.3812026977539,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249518.6878037,
+          "receive_timestamp": 1753249518.812888,
+          "latency_ms": 125.08416175842285,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249519.815083,
+          "receive_timestamp": 1753249519.9720674,
+          "latency_ms": 156.9843292236328,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249519.9720674,
+          "receive_timestamp": 1753249520.0984323,
+          "latency_ms": 126.36494636535645,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249521.1060867,
+          "receive_timestamp": 1753249521.2628183,
+          "latency_ms": 156.73160552978516,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249521.2628183,
+          "receive_timestamp": 1753249521.3882413,
+          "latency_ms": 125.42295455932617,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249522.393646,
+          "receive_timestamp": 1753249522.5512826,
+          "latency_ms": 157.6366424560547,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249522.5512826,
+          "receive_timestamp": 1753249522.6767304,
+          "latency_ms": 125.44775009155273,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249523.6840734,
+          "receive_timestamp": 1753249523.838336,
+          "latency_ms": 154.26254272460938,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249523.838336,
+          "receive_timestamp": 1753249523.9641824,
+          "latency_ms": 125.84638595581055,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249524.972048,
+          "receive_timestamp": 1753249525.1277127,
+          "latency_ms": 155.66468238830566,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249525.1277127,
+          "receive_timestamp": 1753249525.2534494,
+          "latency_ms": 125.73671340942383,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249526.2668953,
+          "receive_timestamp": 1753249526.4242158,
+          "latency_ms": 157.32049942016602,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249526.4242158,
+          "receive_timestamp": 1753249526.5483763,
+          "latency_ms": 124.1605281829834,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249527.5639734,
+          "receive_timestamp": 1753249527.7204282,
+          "latency_ms": 156.45480155944824,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249527.7204282,
+          "receive_timestamp": 1753249527.844827,
+          "latency_ms": 124.39870834350586,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249528.8468444,
+          "receive_timestamp": 1753249529.0031912,
+          "latency_ms": 156.34679794311523,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249529.0031912,
+          "receive_timestamp": 1753249529.1284022,
+          "latency_ms": 125.21100044250488,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249530.1417544,
+          "receive_timestamp": 1753249530.2976773,
+          "latency_ms": 155.92288970947266,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249530.2976773,
+          "receive_timestamp": 1753249530.4239821,
+          "latency_ms": 126.30486488342285,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249531.4278948,
+          "receive_timestamp": 1753249531.5854716,
+          "latency_ms": 157.5767993927002,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249531.5854716,
+          "receive_timestamp": 1753249531.7122378,
+          "latency_ms": 126.76620483398438,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249532.720014,
+          "receive_timestamp": 1753249532.8776414,
+          "latency_ms": 157.62734413146973,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249532.8776414,
+          "receive_timestamp": 1753249533.004655,
+          "latency_ms": 127.0134449005127,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249534.0082986,
+          "receive_timestamp": 1753249534.1673086,
+          "latency_ms": 159.0099334716797,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249534.1673086,
+          "receive_timestamp": 1753249534.292069,
+          "latency_ms": 124.76038932800293,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "ping",
+          "send_timestamp": 1753249535.2962284,
+          "receive_timestamp": 1753249535.4537418,
+          "latency_ms": 157.51338005065918,
+          "payload_size": 0,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        },
+        {
+          "device_id": "device_001",
+          "communication_method": "bluetooth",
+          "test_type": "echo",
+          "send_timestamp": 1753249535.4537418,
+          "receive_timestamp": 1753249535.580181,
+          "latency_ms": 126.43909454345703,
+          "payload_size": 26,
+          "success": true,
+          "error_message": "",
+          "metadata": {
+            "simulated": true
+          }
+        }
+      ]
+    },
+    "device_002": {
+      "device_id": "device_002",
+      "test_duration_seconds": 30.0,
+      "wifi_avg_latency_ms": 0.0,
+      "bluetooth_avg_latency_ms": 0.0,
+      "wifi_success_rate": 0.0,
+      "bluetooth_success_rate": 0.0,
+      "recommended_method": "bluetooth",
+      "wifi_measurements_count": 90,
+      "bluetooth_measurements_count": 0,
+      "wifi_measurements": [
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249542.694218,
+          "receive_timestamp": 1753249542.694218,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249542.694218,
+          "receive_timestamp": 1753249542.694218,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249542.694218,
+          "receive_timestamp": 1753249542.694218,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249543.701733,
+          "receive_timestamp": 1753249543.701733,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249543.701733,
+          "receive_timestamp": 1753249543.701733,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249543.701733,
+          "receive_timestamp": 1753249543.701733,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249544.7153754,
+          "receive_timestamp": 1753249544.7153754,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249544.7153754,
+          "receive_timestamp": 1753249544.7153754,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249544.7153754,
+          "receive_timestamp": 1753249544.7153754,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249545.7230794,
+          "receive_timestamp": 1753249545.7230794,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249545.7230794,
+          "receive_timestamp": 1753249545.7230794,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249545.7230794,
+          "receive_timestamp": 1753249545.7230794,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249546.7268865,
+          "receive_timestamp": 1753249546.7268865,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249546.7268865,
+          "receive_timestamp": 1753249546.7268865,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249546.7268865,
+          "receive_timestamp": 1753249546.7268865,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249547.7427466,
+          "receive_timestamp": 1753249547.7427466,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249547.7427466,
+          "receive_timestamp": 1753249547.7427466,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249547.7427466,
+          "receive_timestamp": 1753249547.7427466,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249548.750892,
+          "receive_timestamp": 1753249548.750892,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249548.750892,
+          "receive_timestamp": 1753249548.750892,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249548.750892,
+          "receive_timestamp": 1753249548.750892,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249549.7547138,
+          "receive_timestamp": 1753249549.7547138,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249549.7547138,
+          "receive_timestamp": 1753249549.7547138,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249549.7547138,
+          "receive_timestamp": 1753249549.7547138,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249550.7624867,
+          "receive_timestamp": 1753249550.7624867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249550.7624867,
+          "receive_timestamp": 1753249550.7624867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249550.7624867,
+          "receive_timestamp": 1753249550.7624867,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249551.7668462,
+          "receive_timestamp": 1753249551.7668462,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249551.7668462,
+          "receive_timestamp": 1753249551.7668462,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249551.7668462,
+          "receive_timestamp": 1753249551.7668462,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249552.779829,
+          "receive_timestamp": 1753249552.779829,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249552.779829,
+          "receive_timestamp": 1753249552.779829,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249552.779829,
+          "receive_timestamp": 1753249552.779829,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249553.7817698,
+          "receive_timestamp": 1753249553.7817698,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249553.7817698,
+          "receive_timestamp": 1753249553.7817698,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249553.7817698,
+          "receive_timestamp": 1753249553.7817698,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249554.7861857,
+          "receive_timestamp": 1753249554.7861857,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249554.7861857,
+          "receive_timestamp": 1753249554.7861857,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249554.7861857,
+          "receive_timestamp": 1753249554.7861857,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249555.7954736,
+          "receive_timestamp": 1753249555.7954736,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249555.7954736,
+          "receive_timestamp": 1753249555.7954736,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249555.7954736,
+          "receive_timestamp": 1753249555.7954736,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249556.801023,
+          "receive_timestamp": 1753249556.801023,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249556.801023,
+          "receive_timestamp": 1753249556.801023,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249556.801023,
+          "receive_timestamp": 1753249556.801023,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249557.8072095,
+          "receive_timestamp": 1753249557.8072095,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249557.8072095,
+          "receive_timestamp": 1753249557.8072095,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249557.8072095,
+          "receive_timestamp": 1753249557.8072095,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249558.8126929,
+          "receive_timestamp": 1753249558.8126929,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249558.8126929,
+          "receive_timestamp": 1753249558.8126929,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249558.8126929,
+          "receive_timestamp": 1753249558.8126929,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249559.814734,
+          "receive_timestamp": 1753249559.814734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249559.814734,
+          "receive_timestamp": 1753249559.814734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249559.814734,
+          "receive_timestamp": 1753249559.814734,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249560.8331935,
+          "receive_timestamp": 1753249560.8331935,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249560.8331935,
+          "receive_timestamp": 1753249560.8331935,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249560.8331935,
+          "receive_timestamp": 1753249560.8331935,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249561.8389928,
+          "receive_timestamp": 1753249561.8389928,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249561.8389928,
+          "receive_timestamp": 1753249561.8389928,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249561.8389928,
+          "receive_timestamp": 1753249561.8389928,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249562.840891,
+          "receive_timestamp": 1753249562.840891,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249562.840891,
+          "receive_timestamp": 1753249562.840891,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249562.840891,
+          "receive_timestamp": 1753249562.840891,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249563.8475482,
+          "receive_timestamp": 1753249563.8475482,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249563.8475482,
+          "receive_timestamp": 1753249563.8475482,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249563.8475482,
+          "receive_timestamp": 1753249563.8475482,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249564.8544726,
+          "receive_timestamp": 1753249564.8544726,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249564.8544726,
+          "receive_timestamp": 1753249564.8544726,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249564.8544726,
+          "receive_timestamp": 1753249564.8544726,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249565.874386,
+          "receive_timestamp": 1753249565.874386,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249565.874386,
+          "receive_timestamp": 1753249565.874386,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249565.874386,
+          "receive_timestamp": 1753249565.874386,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249566.8810048,
+          "receive_timestamp": 1753249566.8810048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249566.8810048,
+          "receive_timestamp": 1753249566.8810048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249566.8810048,
+          "receive_timestamp": 1753249566.8810048,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249567.888262,
+          "receive_timestamp": 1753249567.888262,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249567.888262,
+          "receive_timestamp": 1753249567.888262,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249567.888262,
+          "receive_timestamp": 1753249567.888262,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249568.9013357,
+          "receive_timestamp": 1753249568.9013357,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249568.9013357,
+          "receive_timestamp": 1753249568.9013357,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249568.9013357,
+          "receive_timestamp": 1753249568.9013357,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249569.9036548,
+          "receive_timestamp": 1753249569.9036548,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249569.9036548,
+          "receive_timestamp": 1753249569.9036548,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249569.9036548,
+          "receive_timestamp": 1753249569.9036548,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249570.929298,
+          "receive_timestamp": 1753249570.929298,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249570.929298,
+          "receive_timestamp": 1753249570.929298,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249570.929298,
+          "receive_timestamp": 1753249570.929298,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "ping",
+          "send_timestamp": 1753249571.9322815,
+          "receive_timestamp": 1753249571.9322815,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send ping command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "echo",
+          "send_timestamp": 1753249571.9322815,
+          "receive_timestamp": 1753249571.9322815,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send echo command",
+          "metadata": {}
+        },
+        {
+          "device_id": "device_002",
+          "communication_method": "wifi",
+          "test_type": "command_response",
+          "send_timestamp": 1753249571.9322815,
+          "receive_timestamp": 1753249571.9322815,
+          "latency_ms": 0.0,
+          "payload_size": 0,
+          "success": false,
+          "error_message": "Failed to send status command",
+          "metadata": {}
+        }
+      ],
+      "bluetooth_measurements": []
+    }
+  },
+  "summary": {
+    "wifi_avg_latency_ms": 0.0,
+    "bluetooth_avg_latency_ms": 141.2529001633326,
+    "wifi_success_rate": 0.0,
+    "bluetooth_success_rate": 100.0,
+    "recommended_method_distribution": {
+      "bluetooth": 100.0
+    }
+  }
+}

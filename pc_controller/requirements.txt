@@ -14,7 +14,7 @@ matplotlib>=3.7.0
 
 # Video and Multimedia
 opencv-python>=4.8.0
-PyQt6-Multimedia>=6.5.0
+# PyQt6-Multimedia>=6.0.0
 
 # Configuration and Logging
 pyyaml>=6.0

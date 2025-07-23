@@ -173,8 +173,8 @@ class ThermalCameraManager(
             }
         }
 
-        override fun onGranted(device: UsbDevice, granted: Boolean) {
-            if (granted) {
+        override fun onGranted(p0: UsbDevice?, p1: Boolean) {
+            if (p1) {
                 Timber.d("USB permission granted for thermal camera")
             } else {
                 updateStatus("USB permission denied")

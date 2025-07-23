@@ -72,23 +72,11 @@ class PCControllerApp:
     
     def setup_async_integration(self):
         """Setup integration between Qt event loop and asyncio."""
-        # Create a timer to process asyncio events
-        self.async_timer = QTimer()
-        self.async_timer.timeout.connect(self.process_async_events)
-        self.async_timer.start(10)  # Process every 10ms
-        
-        # Create asyncio event loop
+        # Create asyncio event loop but don't try to integrate it with Qt
+        # The async components will run in their own threads
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-    
-    def process_async_events(self):
-        """Process pending asyncio events."""
-        try:
-            # Process all ready tasks
-            self.loop._ready.clear()
-            self.loop._run_once()
-        except Exception as e:
-            logging.error(f"Error processing async events: {e}")
+        logging.info("Async event loop created")
     
     def run(self):
         """Run the application."""

@@ -3,6 +3,9 @@ package com.multimodal.capture.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.wifi.WifiManager
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.os.Handler
 import android.os.Looper
 import com.multimodal.capture.R
@@ -27,13 +30,50 @@ import kotlin.random.Random
 import java.util.UUID
 
 /**
+ * Connection type enumeration for latency-aware synchronization
+ */
+enum class ConnectionType {
+    WIFI,
+    BLUETOOTH,
+    ETHERNET,
+    UNKNOWN
+}
+
+/**
+ * Connection-specific latency baselines based on analysis
+ */
+object LatencyBaselines {
+    // WiFi latency baselines (ms)
+    const val WIFI_EXCELLENT_THRESHOLD = 50L
+    const val WIFI_GOOD_THRESHOLD = 80L
+    const val WIFI_FAIR_THRESHOLD = 100L
+    const val WIFI_POOR_THRESHOLD = 200L
+    
+    // Bluetooth latency baselines (ms) - higher thresholds due to inherent latency
+    const val BLUETOOTH_EXCELLENT_THRESHOLD = 120L
+    const val BLUETOOTH_GOOD_THRESHOLD = 160L
+    const val BLUETOOTH_FAIR_THRESHOLD = 200L
+    const val BLUETOOTH_POOR_THRESHOLD = 300L
+    
+    // Ethernet latency baselines (ms) - lowest latency
+    const val ETHERNET_EXCELLENT_THRESHOLD = 20L
+    const val ETHERNET_GOOD_THRESHOLD = 50L
+    const val ETHERNET_FAIR_THRESHOLD = 80L
+    const val ETHERNET_POOR_THRESHOLD = 150L
+}
+
+/**
  * NetworkManager handles bi-directional communication with PC controller.
  * Implements command protocol for remote START/STOP and status updates.
+ * Enhanced with connection-aware latency calculation for WiFi and Bluetooth.
  */
 class NetworkManager(private val context: Context) {
     
     private val mainHandler = Handler(Looper.getMainLooper())
     private val gson = Gson()
+    
+    // Connection type tracking for latency-aware synchronization
+    private var currentConnectionType: ConnectionType = ConnectionType.UNKNOWN
     
     // Network configuration
     private val serverPort = 8888 // Default port for PC communication
@@ -157,11 +197,14 @@ class NetworkManager(private val context: Context) {
     private fun startServer() {
         serverJob = CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Update connection type when starting server
+                updateConnectionType()
+                
                 serverSocket = ServerSocket(serverPort)
                 isListening.set(true)
-                updateStatus("Listening for PC connection...")
+                updateStatus("Listening for PC connection... (Connection: $currentConnectionType)")
                 
-                Timber.d("Server started on port $serverPort")
+                Timber.d("Server started on port $serverPort (Connection: $currentConnectionType)")
                 
                 while (isListening.get()) {
                     try {
@@ -580,6 +623,102 @@ class NetworkManager(private val context: Context) {
     }
     
     /**
+     * Detect current connection type for latency-aware synchronization
+     */
+    private fun detectConnectionType(): ConnectionType {
+        try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork ?: return ConnectionType.UNKNOWN
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return ConnectionType.UNKNOWN
+            
+            return when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                    Timber.d("Detected WiFi connection")
+                    ConnectionType.WIFI
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> {
+                    Timber.d("Detected Bluetooth connection")
+                    ConnectionType.BLUETOOTH
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                    Timber.d("Detected Ethernet connection")
+                    ConnectionType.ETHERNET
+                }
+                else -> {
+                    Timber.d("Unknown connection type")
+                    ConnectionType.UNKNOWN
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error detecting connection type")
+            return ConnectionType.UNKNOWN
+        }
+    }
+    
+    /**
+     * Update current connection type and log changes
+     */
+    private fun updateConnectionType() {
+        val newConnectionType = detectConnectionType()
+        if (newConnectionType != currentConnectionType) {
+            Timber.i("Connection type changed from $currentConnectionType to $newConnectionType")
+            currentConnectionType = newConnectionType
+        }
+    }
+    
+    /**
+     * Get current connection type
+     */
+    fun getConnectionType(): ConnectionType {
+        return currentConnectionType
+    }
+    
+    /**
+     * Calculate sync quality based on connection type and round-trip time
+     */
+    private fun calculateConnectionAwareQuality(roundTripTime: Long, connectionType: ConnectionType): Int {
+        return when (connectionType) {
+            ConnectionType.WIFI -> {
+                when {
+                    roundTripTime <= LatencyBaselines.WIFI_EXCELLENT_THRESHOLD -> 100
+                    roundTripTime <= LatencyBaselines.WIFI_GOOD_THRESHOLD -> 80
+                    roundTripTime <= LatencyBaselines.WIFI_FAIR_THRESHOLD -> 60
+                    roundTripTime <= LatencyBaselines.WIFI_POOR_THRESHOLD -> 40
+                    else -> 20
+                }
+            }
+            ConnectionType.BLUETOOTH -> {
+                when {
+                    roundTripTime <= LatencyBaselines.BLUETOOTH_EXCELLENT_THRESHOLD -> 100
+                    roundTripTime <= LatencyBaselines.BLUETOOTH_GOOD_THRESHOLD -> 80
+                    roundTripTime <= LatencyBaselines.BLUETOOTH_FAIR_THRESHOLD -> 60
+                    roundTripTime <= LatencyBaselines.BLUETOOTH_POOR_THRESHOLD -> 40
+                    else -> 20
+                }
+            }
+            ConnectionType.ETHERNET -> {
+                when {
+                    roundTripTime <= LatencyBaselines.ETHERNET_EXCELLENT_THRESHOLD -> 100
+                    roundTripTime <= LatencyBaselines.ETHERNET_GOOD_THRESHOLD -> 80
+                    roundTripTime <= LatencyBaselines.ETHERNET_FAIR_THRESHOLD -> 60
+                    roundTripTime <= LatencyBaselines.ETHERNET_POOR_THRESHOLD -> 40
+                    else -> 20
+                }
+            }
+            ConnectionType.UNKNOWN -> {
+                // Fall back to original WiFi-based calculation for unknown connections
+                when {
+                    roundTripTime < 10 -> 100
+                    roundTripTime < 50 -> 80
+                    roundTripTime < 100 -> 60
+                    roundTripTime < 500 -> 40
+                    else -> 20
+                }
+            }
+        }
+    }
+    
+    /**
      * Set status callback
      */
     fun setStatusCallback(callback: (String) -> Unit) {
@@ -742,11 +881,16 @@ class NetworkManager(private val context: Context) {
      * Get current network metrics
      */
     private fun getNetworkMetrics(): Map<String, Any> {
+        // Update connection type before returning metrics
+        updateConnectionType()
+        
         return mapOf(
             "connectionQuality" to if (isNetworkAvailable()) "good" else "poor",
+            "connectionType" to currentConnectionType.name,
             "lastMessageTime" to (networkMetrics["lastMessageTime"] ?: 0L),
             "messageCount" to messageSequenceNumber.get(),
-            "retryCount" to connectionRetryCount.get()
+            "retryCount" to connectionRetryCount.get(),
+            "connectionTypeDetected" to System.currentTimeMillis()
         )
     }
 
@@ -935,14 +1079,11 @@ class NetworkManager(private val context: Context) {
             // offset = ((serverReceiveTime - clientSendTime) + (serverSendTime - clientReceiveTime)) / 2
             val offset = ((serverReceiveTime - clientSendTime) + (serverSendTime - clientReceiveTime)) / 2
             
-            // Calculate quality based on round-trip time (lower RTT = higher quality)
-            val quality = when {
-                roundTripTime < 10 -> 100
-                roundTripTime < 50 -> 80
-                roundTripTime < 100 -> 60
-                roundTripTime < 500 -> 40
-                else -> 20
-            }
+            // Update connection type before calculating quality
+            updateConnectionType()
+            
+            // Calculate quality based on round-trip time and connection type
+            val quality = calculateConnectionAwareQuality(roundTripTime, currentConnectionType)
             
             val measurement = SyncMeasurement(
                 clientSendTime = clientSendTime,
@@ -1038,8 +1179,12 @@ class NetworkManager(private val context: Context) {
     
     /**
      * Initiate sync ping to PC for time synchronization
+     * Enhanced with connection-aware latency calculation
      */
     fun initiateSyncPing() {
+        // Update connection type before sync ping
+        updateConnectionType()
+        
         val clientSendTime = System.currentTimeMillis()
         val syncPing = SyncPingMessage(
             clientTimestamp = clientSendTime,
@@ -1055,7 +1200,13 @@ class NetworkManager(private val context: Context) {
         )
         
         sendMessage(gson.toJson(message))
-        Timber.d("Initiated sync ping: ${syncPing.pingId}")
+        
+        // Log sync ping with connection type information
+        Timber.d("Initiated sync ping: ${syncPing.pingId} (Connection: $currentConnectionType)")
+        
+        // Update network metrics with connection-aware sync attempt
+        networkMetrics["lastSyncAttempt"] = clientSendTime
+        networkMetrics["syncConnectionType"] = currentConnectionType.name
     }
 
     /**

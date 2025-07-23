@@ -4,26 +4,26 @@ Provides the primary graphical interface for device management and recording con
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QLabel, QTableWidget, QTableWidgetItem, QTextEdit,
     QGroupBox, QProgressBar, QStatusBar, QMenuBar, QMenu, QMessageBox,
-    QSplitter, QFrame, QScrollArea, QTabWidget
+    QSplitter, QFrame, QScrollArea, QTabWidget, QComboBox
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSlot
 from PyQt6.QtGui import QAction, QIcon, QPixmap, QFont
 
-from core.device_manager import DeviceManager, AndroidDevice, DeviceStatus
+from core.device_manager import DeviceManager, AndroidDevice, BluetoothDevice, WiFiDevice, USBDevice, DeviceStatus
 from core.recording_controller import RecordingController, RecordingState
 from utils.config import Config
 from ui.video_series_widget import VideoSeriesWidget
 from ui.live_preview_widget import LivePreviewWidget
 
-class DeviceStatusWidget(QWidget):
+class DeviceStatusWidget(QFrame):
     """Widget for displaying individual device status."""
     
-    def __init__(self, device: AndroidDevice):
+    def __init__(self, device: Union[AndroidDevice, BluetoothDevice, WiFiDevice, USBDevice]):
         super().__init__()
         self.device = device
         self.setup_ui()
@@ -32,8 +32,15 @@ class DeviceStatusWidget(QWidget):
         """Setup the device status UI."""
         layout = QVBoxLayout(self)
         
-        # Device header
+        # Device header with type indicator
         header_layout = QHBoxLayout()
+        
+        # Device type indicator
+        device_type = self._get_device_type()
+        type_label = QLabel(f"[{device_type.upper()}]")
+        type_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        type_label.setStyleSheet(self._get_device_type_style(device_type))
+        header_layout.addWidget(type_label)
         
         self.device_name_label = QLabel(self.device.device_name)
         self.device_name_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
@@ -53,12 +60,17 @@ class DeviceStatusWidget(QWidget):
         details_layout.addWidget(QLabel("Device ID:"), 0, 0)
         details_layout.addWidget(QLabel(self.device.device_id), 0, 1)
         
-        details_layout.addWidget(QLabel("IP Address:"), 1, 0)
+        # Address field (IP for Android, MAC for Bluetooth/WiFi)
+        address_label = "IP Address:" if isinstance(self.device, AndroidDevice) else "Address:"
+        details_layout.addWidget(QLabel(address_label), 1, 0)
         details_layout.addWidget(QLabel(self.device.ip_address), 1, 1)
         
         details_layout.addWidget(QLabel("Capabilities:"), 2, 0)
         capabilities_text = ", ".join(self.device.capabilities)
         details_layout.addWidget(QLabel(capabilities_text), 2, 1)
+        
+        # Add device-specific information
+        self._add_device_specific_info(details_layout, 3)
         
         layout.addLayout(details_layout)
         
@@ -94,6 +106,73 @@ class DeviceStatusWidget(QWidget):
         }
         return color_map.get(status, "color: black;")
     
+    def _get_device_type(self) -> str:
+        """Get the device type as a string."""
+        if isinstance(self.device, AndroidDevice):
+            return "android"
+        elif isinstance(self.device, BluetoothDevice):
+            return "bluetooth"
+        elif isinstance(self.device, WiFiDevice):
+            return "wifi"
+        elif isinstance(self.device, USBDevice):
+            return "usb"
+        else:
+            return "unknown"
+    
+    def _get_device_type_style(self, device_type: str) -> str:
+        """Get CSS style for device type label."""
+        color_map = {
+            "android": "color: #4CAF50; background-color: #E8F5E8; padding: 2px 6px; border-radius: 3px;",
+            "bluetooth": "color: #2196F3; background-color: #E3F2FD; padding: 2px 6px; border-radius: 3px;",
+            "wifi": "color: #FF9800; background-color: #FFF3E0; padding: 2px 6px; border-radius: 3px;",
+            "usb": "color: #9C27B0; background-color: #F3E5F5; padding: 2px 6px; border-radius: 3px;",
+            "unknown": "color: #757575; background-color: #F5F5F5; padding: 2px 6px; border-radius: 3px;"
+        }
+        return color_map.get(device_type, "color: black;")
+    
+    def _add_device_specific_info(self, layout: QGridLayout, start_row: int):
+        """Add device-specific information to the layout."""
+        if isinstance(self.device, BluetoothDevice):
+            if hasattr(self.device, 'device_class') and self.device.device_class:
+                layout.addWidget(QLabel("Device Class:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.device_class), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'rssi') and self.device.rssi is not None:
+                layout.addWidget(QLabel("Signal Strength:"), start_row, 0)
+                layout.addWidget(QLabel(f"{self.device.rssi} dBm"), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'is_paired'):
+                layout.addWidget(QLabel("Paired:"), start_row, 0)
+                layout.addWidget(QLabel("Yes" if self.device.is_paired else "No"), start_row, 1)
+        elif isinstance(self.device, WiFiDevice):
+            if hasattr(self.device, 'security') and self.device.security:
+                layout.addWidget(QLabel("Security:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.security), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'signal_strength') and self.device.signal_strength is not None:
+                layout.addWidget(QLabel("Signal Strength:"), start_row, 0)
+                layout.addWidget(QLabel(f"{self.device.signal_strength} dBm"), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'frequency') and self.device.frequency:
+                layout.addWidget(QLabel("Frequency:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.frequency), start_row, 1)
+        elif isinstance(self.device, AndroidDevice):
+            if hasattr(self.device, 'server_port'):
+                layout.addWidget(QLabel("Server Port:"), start_row, 0)
+                layout.addWidget(QLabel(str(self.device.server_port)), start_row, 1)
+        elif isinstance(self.device, USBDevice):
+            if hasattr(self.device, 'vendor_id') and self.device.vendor_id:
+                layout.addWidget(QLabel("Vendor ID:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.vendor_id), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'product_id') and self.device.product_id:
+                layout.addWidget(QLabel("Product ID:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.product_id), start_row, 1)
+                start_row += 1
+            if hasattr(self.device, 'serial_number') and self.device.serial_number:
+                layout.addWidget(QLabel("Serial Number:"), start_row, 0)
+                layout.addWidget(QLabel(self.device.serial_number), start_row, 1)
+    
     def _update_button_states(self):
         """Update button enabled states based on device status."""
         is_connected = self.device.status == DeviceStatus.CONNECTED
@@ -104,15 +183,47 @@ class DeviceStatusWidget(QWidget):
     
     def _on_connect_clicked(self):
         """Handle connect button click."""
-        # This will be connected to the main window's device manager
-        pass
+        # Only Android devices support connection
+        if not isinstance(self.device, AndroidDevice):
+            device_type = self._get_device_type().title()
+            QMessageBox.critical(
+                self, 
+                "Connection Not Supported", 
+                f"Connection to {device_type} devices is not currently supported.\n\n"
+                f"Only Android devices can be connected for data capture."
+            )
+            return
+        
+        # For Android devices, this would be connected to the device manager
+        # Currently not implemented
+        QMessageBox.information(
+            self,
+            "Connection Not Implemented",
+            "Android device connection functionality is not yet implemented."
+        )
     
     def _on_disconnect_clicked(self):
         """Handle disconnect button click."""
-        # This will be connected to the main window's device manager
-        pass
+        # Only Android devices support disconnection
+        if not isinstance(self.device, AndroidDevice):
+            device_type = self._get_device_type().title()
+            QMessageBox.critical(
+                self, 
+                "Disconnection Not Supported", 
+                f"Disconnection from {device_type} devices is not currently supported.\n\n"
+                f"Only Android devices can be disconnected."
+            )
+            return
+        
+        # For Android devices, this would be connected to the device manager
+        # Currently not implemented
+        QMessageBox.information(
+            self,
+            "Disconnection Not Implemented", 
+            "Android device disconnection functionality is not yet implemented."
+        )
     
-    def update_device(self, device: AndroidDevice):
+    def update_device(self, device: Union[AndroidDevice, BluetoothDevice, WiFiDevice]):
         """Update the widget with new device information."""
         self.device = device
         self.device_name_label.setText(device.device_name)
@@ -314,14 +425,20 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
     
     def _create_devices_tab(self):
-        """Create the devices management tab."""
+        """Create the devices management tab with two-column layout and sorting."""
         devices_widget = QWidget()
         layout = QVBoxLayout(devices_widget)
         
-        # Header
+        # Header with sorting controls
         header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel("Connected Devices"))
+        header_layout.addWidget(QLabel("Device Management"))
         header_layout.addStretch()
+        
+        # Device type filter
+        self.device_type_filter = QComboBox()
+        self.device_type_filter.addItems(["All Types", "Android", "Bluetooth", "WiFi", "USB"])
+        self.device_type_filter.currentTextChanged.connect(self._on_device_type_filter_changed)
+        header_layout.addWidget(self.device_type_filter)
         
         refresh_button = QPushButton("Refresh")
         refresh_button.clicked.connect(self._refresh_devices)
@@ -329,17 +446,47 @@ class MainWindow(QMainWindow):
         
         layout.addLayout(header_layout)
         
-        # Devices scroll area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # Two-column layout
+        columns_layout = QHBoxLayout()
         
-        self.devices_container = QWidget()
-        self.devices_layout = QVBoxLayout(self.devices_container)
-        self.devices_layout.addStretch()
+        # Available devices column
+        available_group = QGroupBox("Available Devices")
+        available_layout = QVBoxLayout(available_group)
         
-        scroll_area.setWidget(self.devices_container)
-        layout.addWidget(scroll_area)
+        self.available_scroll_area = QScrollArea()
+        self.available_scroll_area.setWidgetResizable(True)
+        self.available_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        self.available_devices_container = QWidget()
+        self.available_devices_layout = QVBoxLayout(self.available_devices_container)
+        self.available_devices_layout.addStretch()
+        
+        self.available_scroll_area.setWidget(self.available_devices_container)
+        available_layout.addWidget(self.available_scroll_area)
+        
+        columns_layout.addWidget(available_group)
+        
+        # Connected devices column
+        connected_group = QGroupBox("Connected Devices")
+        connected_layout = QVBoxLayout(connected_group)
+        
+        self.connected_scroll_area = QScrollArea()
+        self.connected_scroll_area.setWidgetResizable(True)
+        self.connected_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        self.connected_devices_container = QWidget()
+        self.connected_devices_layout = QVBoxLayout(self.connected_devices_container)
+        self.connected_devices_layout.addStretch()
+        
+        self.connected_scroll_area.setWidget(self.connected_devices_container)
+        connected_layout.addWidget(self.connected_scroll_area)
+        
+        columns_layout.addWidget(connected_group)
+        
+        layout.addLayout(columns_layout)
+        
+        # Initialize device type filter state
+        self.current_device_type_filter = "all"
         
         self.tab_widget.addTab(devices_widget, "Devices")
     
@@ -549,14 +696,35 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage(f"Preview stopped: {device_id}")
     
     def _update_devices_display(self):
-        """Update the devices display."""
+        """Update the devices display with two-column layout."""
         # Clear existing widgets
         for widget in self.device_widgets.values():
             widget.setParent(None)
         self.device_widgets.clear()
         
-        # Add current devices
+        # Get all devices
         devices = self.device_manager.get_all_devices()
+        
+        # Filter devices by type if needed
+        if self.current_device_type_filter != "all":
+            devices = [d for d in devices if self._get_device_type_from_device(d) == self.current_device_type_filter]
+        
+        # Separate devices by connection status
+        available_devices = []
+        connected_devices = []
+        
+        for device in devices:
+            if self._is_device_connected(device):
+                connected_devices.append(device)
+            else:
+                available_devices.append(device)
+        
+        # Add devices to appropriate columns
+        self._populate_device_column(available_devices, self.available_devices_layout)
+        self._populate_device_column(connected_devices, self.connected_devices_layout)
+    
+    def _populate_device_column(self, devices, layout):
+        """Populate a device column with device widgets."""
         for device in devices:
             widget = DeviceStatusWidget(device)
             
@@ -569,7 +737,48 @@ class MainWindow(QMainWindow):
             )
             
             self.device_widgets[device.device_id] = widget
-            self.devices_layout.insertWidget(self.devices_layout.count() - 1, widget)
+            layout.insertWidget(layout.count() - 1, widget)
+    
+    def _is_device_connected(self, device):
+        """Check if a device is connected."""
+        connected_statuses = {DeviceStatus.CONNECTED, DeviceStatus.RECORDING}
+        return device.status in connected_statuses
+    
+    def _get_device_type_from_device(self, device):
+        """Get device type string from device object."""
+        if isinstance(device, AndroidDevice):
+            return "android"
+        elif isinstance(device, BluetoothDevice):
+            return "bluetooth"
+        elif isinstance(device, WiFiDevice):
+            return "wifi"
+        elif isinstance(device, USBDevice):
+            return "usb"
+        else:
+            return "unknown"
+    
+    def _sort_devices_by_connection_type(self, devices):
+        """Sort devices by connection type (android, bluetooth, wifi, usb)."""
+        type_order = {"android": 0, "bluetooth": 1, "wifi": 2, "usb": 3, "unknown": 4}
+        return sorted(devices, key=lambda d: type_order.get(self._get_device_type_from_device(d), 4))
+    
+    def _on_device_type_filter_changed(self, text):
+        """Handle device type filter combobox selection change."""
+        device_type_map = {
+            "All Types": "all",
+            "Android": "android", 
+            "Bluetooth": "bluetooth",
+            "WiFi": "wifi",
+            "USB": "usb"
+        }
+        device_type = device_type_map.get(text, "all")
+        self._set_device_type_filter(device_type)
+    
+    def _set_device_type_filter(self, device_type):
+        """Set the device type filter."""
+        self.current_device_type_filter = device_type
+        self._update_devices_display()
+    
     
     def _update_device_status_table(self):
         """Update the device status table."""
