@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".ui.PreviewActivity">
+
+    <!-- App Title -->
+    <TextView
+        android:id="@+id/tv_preview_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Camera Preview"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/btn_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="← Back"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/purple_500"
+        style="@style/Widget.Material3.Button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Camera Selection Buttons -->
+    <LinearLayout
+        android:id="@+id/camera_selection_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_preview_title">
+
+        <Button
+            android:id="@+id/btn_camera_front"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="Front"
+            android:textSize="12sp"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+        <Button
+            android:id="@+id/btn_camera_back_main"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:text="Main"
+            android:textSize="12sp"
+            android:backgroundTint="@color/purple_700"
+            android:textColor="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+        <Button
+            android:id="@+id/btn_camera_wide"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:text="Wide"
+            android:textSize="12sp"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+        <Button
+            android:id="@+id/btn_camera_tele"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:text="Tele"
+            android:textSize="12sp"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+        <Button
+            android:id="@+id/btn_camera_thermal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="IR"
+            android:textSize="12sp"
+            android:backgroundTint="@color/teal_700"
+            android:textColor="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+    </LinearLayout>
+
+    <!-- Camera Preview Container -->
+    <FrameLayout
+        android:id="@+id/preview_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/overlay_background"
+        app:layout_constraintTop_toBottomOf="@id/camera_selection_panel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/camera_info_panel">
+
+        <!-- RGB Camera Preview -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible"
+            tools:background="@color/purple_200" />
+
+        <!-- Thermal Camera Preview -->
+        <ImageView
+            android:id="@+id/thermal_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            tools:src="@color/teal_200" />
+
+        <!-- Camera Status Overlay -->
+        <TextView
+            android:id="@+id/tv_camera_status_overlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="16dp"
+            android:background="@color/overlay_background"
+            android:padding="8dp"
+            android:text="Camera Ready"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="visible" />
+
+    </FrameLayout>
+
+    <!-- Camera Information Panel -->
+    <LinearLayout
+        android:id="@+id/camera_info_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/overlay_background"
+        android:orientation="vertical"
+        android:padding="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Current Camera Info -->
+        <TextView
+            android:id="@+id/tv_current_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current: Back Camera (Main)"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Camera Details -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_resolution"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Resolution: 1920x1080"
+                android:textColor="@color/overlay_text"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_fps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="FPS: 30"
+                android:textColor="@color/overlay_text"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_camera_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Status: Ready"
+                android:textColor="@color/status_ready"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

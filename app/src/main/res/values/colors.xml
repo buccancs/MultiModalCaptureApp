@@ -22,6 +22,7 @@
     <color name="status_recording">#FFFF5722</color>
     <color name="status_ready">#FF2196F3</color>
     <color name="status_warning">#FFFF9800</color>
+    <color name="status_disabled">#FF9E9E9E</color>
     
     <!-- Recording button colors -->
     <color name="record_start">#FF4CAF50</color>

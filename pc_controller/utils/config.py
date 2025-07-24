@@ -13,7 +13,7 @@ from PyQt6.QtCore import QSettings
 @dataclass
 class NetworkConfig:
     """Network configuration settings."""
-    discovery_port: int = 8889
+    discovery_port: int = 8888
     server_port: int = 8888
     connection_timeout: int = 5000
     max_devices: int = 10

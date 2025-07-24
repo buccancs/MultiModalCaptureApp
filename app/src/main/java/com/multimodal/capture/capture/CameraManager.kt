@@ -11,6 +11,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import com.multimodal.capture.R
 import com.multimodal.capture.utils.TimestampManager
 import com.multimodal.capture.network.NetworkManager
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class CameraManager(
     private val context: Context,
+    private val lifecycleOwner: LifecycleOwner,
     private val networkManager: NetworkManager? = null
 ) {
     
@@ -42,6 +44,9 @@ class CameraManager(
     // Recording state
     private val isRecording = AtomicBoolean(false)
     private var currentSessionId: String = ""
+    
+    // Camera selection
+    private var currentCameraId: Int = 0 // Default to back main camera
     
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
@@ -87,15 +92,15 @@ class CameraManager(
             
             videoCapture = VideoCapture.withOutput(recorder)
             
-            // Select back camera
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            // Select camera based on current camera ID
+            val cameraSelector = getCameraSelector(currentCameraId)
             
             // Unbind all use cases before rebinding
             cameraProvider.unbindAll()
             
             // Bind use cases to camera
             camera = cameraProvider.bindToLifecycle(
-                context as androidx.lifecycle.LifecycleOwner,
+                lifecycleOwner,
                 cameraSelector,
                 preview,
                 videoCapture
@@ -221,6 +226,57 @@ class CameraManager(
             is VideoRecordEvent.Resume -> {
                 Timber.d("Recording resumed")
             }
+        }
+    }
+    
+    /**
+     * Get camera selector based on camera ID
+     */
+    private fun getCameraSelector(cameraId: Int): CameraSelector {
+        return when (cameraId) {
+            0 -> CameraSelector.DEFAULT_BACK_CAMERA  // Back main camera
+            1 -> CameraSelector.DEFAULT_FRONT_CAMERA // Front camera
+            2 -> CameraSelector.Builder()            // Wide angle camera (if available)
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build()
+            3 -> CameraSelector.Builder()            // Telephoto camera (if available)
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build()
+            else -> CameraSelector.DEFAULT_BACK_CAMERA
+        }
+    }
+    
+    /**
+     * Switch to different camera
+     */
+    fun switchCamera(cameraId: Int) {
+        try {
+            Timber.d("Switching to camera ID: $cameraId")
+            
+            if (currentCameraId == cameraId) {
+                Timber.d("Already using camera ID: $cameraId")
+                return
+            }
+            
+            currentCameraId = cameraId
+            
+            // Re-setup camera with new camera ID
+            setupCamera()
+            
+            val cameraName = when (cameraId) {
+                0 -> "Back Camera (Main)"
+                1 -> "Front Camera"
+                2 -> "Wide Angle Camera"
+                3 -> "Telephoto Camera"
+                else -> "Camera $cameraId"
+            }
+            
+            updateStatus("$cameraName Ready")
+            Timber.d("Successfully switched to $cameraName")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to switch to camera $cameraId")
+            updateStatus("Camera Switch Error: ${e.message}")
         }
     }
     

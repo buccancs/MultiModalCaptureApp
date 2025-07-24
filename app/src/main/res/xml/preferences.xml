@@ -2,10 +2,88 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Recording Settings Category -->
+    <!-- Device Enable/Disable Category -->
     <PreferenceCategory
-        android:title="Recording Settings"
+        android:title="Recording Devices"
         android:icon="@drawable/ic_camera">
+
+        <SwitchPreferenceCompat
+            android:key="enable_camera"
+            android:title="Enable Camera Recording"
+            android:summary="Use RGB camera for video recording"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_camera" />
+
+        <SwitchPreferenceCompat
+            android:key="enable_thermal"
+            android:title="Enable Thermal Camera"
+            android:summary="Use IR thermal camera for recording"
+            android:defaultValue="false"
+            android:icon="@drawable/ic_thermal" />
+
+        <SwitchPreferenceCompat
+            android:key="enable_shimmer"
+            android:title="Enable Shimmer GSR Sensor"
+            android:summary="Use Shimmer device for GSR data collection"
+            android:defaultValue="false"
+            android:icon="@drawable/ic_sensor" />
+
+    </PreferenceCategory>
+
+    <!-- Camera Settings Category -->
+    <PreferenceCategory
+        android:title="Camera Settings"
+        android:icon="@drawable/ic_camera">
+
+        <ListPreference
+            android:key="camera_id"
+            android:title="Camera Selection"
+            android:summary="Choose which camera to use"
+            android:entries="@array/camera_entries"
+            android:entryValues="@array/camera_values"
+            android:defaultValue="0"
+            android:icon="@drawable/ic_camera" />
+
+        <ListPreference
+            android:key="video_resolution"
+            android:title="Video Resolution"
+            android:summary="Select video recording resolution"
+            android:entries="@array/resolution_entries"
+            android:entryValues="@array/resolution_values"
+            android:defaultValue="1920x1080"
+            android:icon="@drawable/ic_camera" />
+
+        <ListPreference
+            android:key="video_fps"
+            android:title="Frame Rate (FPS)"
+            android:summary="Select video recording frame rate"
+            android:entries="@array/fps_entries"
+            android:entryValues="@array/fps_values"
+            android:defaultValue="30"
+            android:icon="@drawable/ic_camera" />
+
+        <SwitchPreferenceCompat
+            android:key="auto_iso"
+            android:title="Auto ISO"
+            android:summary="Enable automatic ISO adjustment"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_camera" />
+
+        <SwitchPreferenceCompat
+            android:key="auto_focus"
+            android:title="Auto Focus"
+            android:summary="Enable automatic focus adjustment"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_camera" />
+
+        <ListPreference
+            android:key="processing_stage"
+            android:title="Processing Pipeline Stage"
+            android:summary="Select camera processing stage for capture"
+            android:entries="@array/processing_stage_entries"
+            android:entryValues="@array/processing_stage_values"
+            android:defaultValue="stage1"
+            android:icon="@drawable/ic_camera" />
 
         <ListPreference
             android:key="video_quality"
@@ -15,6 +93,54 @@
             android:entryValues="@array/video_quality_values"
             android:defaultValue="HD"
             android:icon="@drawable/ic_camera" />
+
+    </PreferenceCategory>
+
+    <!-- Thermal Camera Settings Category -->
+    <PreferenceCategory
+        android:title="Thermal Camera Settings"
+        android:icon="@drawable/ic_thermal">
+
+        <ListPreference
+            android:key="thermal_resolution"
+            android:title="Thermal Resolution"
+            android:summary="Select thermal camera resolution"
+            android:entries="@array/thermal_resolution_entries"
+            android:entryValues="@array/thermal_resolution_values"
+            android:defaultValue="256x192"
+            android:icon="@drawable/ic_thermal" />
+
+        <ListPreference
+            android:key="thermal_fps"
+            android:title="Thermal Frame Rate"
+            android:summary="Select thermal camera frame rate"
+            android:entries="@array/thermal_fps_entries"
+            android:entryValues="@array/thermal_fps_values"
+            android:defaultValue="30"
+            android:icon="@drawable/ic_thermal" />
+
+        <ListPreference
+            android:key="thermal_color_palette"
+            android:title="Color Palette"
+            android:summary="Select thermal imaging color palette"
+            android:entries="@array/thermal_palette_entries"
+            android:entryValues="@array/thermal_palette_values"
+            android:defaultValue="iron"
+            android:icon="@drawable/ic_thermal" />
+
+        <SwitchPreferenceCompat
+            android:key="thermal_auto_range"
+            android:title="Auto Temperature Range"
+            android:summary="Automatically adjust temperature range"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_thermal" />
+
+    </PreferenceCategory>
+
+    <!-- Audio Settings Category -->
+    <PreferenceCategory
+        android:title="Audio Settings"
+        android:icon="@drawable/ic_camera">
 
         <ListPreference
             android:key="audio_quality"
@@ -80,7 +206,7 @@
             android:key="discovery_port"
             android:title="Discovery Port"
             android:summary="Port for device discovery"
-            android:defaultValue="8889"
+            android:defaultValue="8888"
             android:inputType="number" />
 
         <SwitchPreferenceCompat

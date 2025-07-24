@@ -109,5 +109,112 @@
         <item>hdf5</item>
         <item>mat</item>
     </string-array>
+
+    <!-- Camera Selection Options -->
+    <string-array name="camera_entries">
+        <item>Back Camera (Main)</item>
+        <item>Front Camera (Selfie)</item>
+        <item>Wide Angle Camera</item>
+        <item>Telephoto Camera</item>
+    </string-array>
     
+    <string-array name="camera_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <!-- Video Resolution Options -->
+    <string-array name="resolution_entries">
+        <item>4K Ultra HD (3840x2160)</item>
+        <item>Full HD (1920x1080)</item>
+        <item>HD (1280x720)</item>
+        <item>Standard (854x480)</item>
+        <item>Low (640x360)</item>
+    </string-array>
+    
+    <string-array name="resolution_values">
+        <item>3840x2160</item>
+        <item>1920x1080</item>
+        <item>1280x720</item>
+        <item>854x480</item>
+        <item>640x360</item>
+    </string-array>
+
+    <!-- Frame Rate Options -->
+    <string-array name="fps_entries">
+        <item>60 FPS (High Performance)</item>
+        <item>30 FPS (Standard)</item>
+        <item>24 FPS (Cinematic)</item>
+        <item>15 FPS (Low Power)</item>
+    </string-array>
+    
+    <string-array name="fps_values">
+        <item>60</item>
+        <item>30</item>
+        <item>24</item>
+        <item>15</item>
+    </string-array>
+
+    <!-- Processing Pipeline Stage Options -->
+    <string-array name="processing_stage_entries">
+        <item>Stage 1 (Raw Capture)</item>
+        <item>Stage 3 (Processed)</item>
+    </string-array>
+    
+    <string-array name="processing_stage_values">
+        <item>stage1</item>
+        <item>stage3</item>
+    </string-array>
+
+    <!-- Thermal Camera Resolution Options -->
+    <string-array name="thermal_resolution_entries">
+        <item>384x288 (High Resolution)</item>
+        <item>256x192 (Standard)</item>
+        <item>160x120 (Low Power)</item>
+        <item>80x60 (Minimal)</item>
+    </string-array>
+    
+    <string-array name="thermal_resolution_values">
+        <item>384x288</item>
+        <item>256x192</item>
+        <item>160x120</item>
+        <item>80x60</item>
+    </string-array>
+
+    <!-- Thermal Camera FPS Options (reuse thermal_frame_rate) -->
+    <string-array name="thermal_fps_entries">
+        <item>30 FPS (High)</item>
+        <item>25 FPS (Standard)</item>
+        <item>15 FPS (Low Power)</item>
+        <item>10 FPS (Minimal)</item>
+    </string-array>
+    
+    <string-array name="thermal_fps_values">
+        <item>30</item>
+        <item>25</item>
+        <item>15</item>
+        <item>10</item>
+    </string-array>
+
+    <!-- Thermal Color Palette Options -->
+    <string-array name="thermal_palette_entries">
+        <item>Iron (Red-Yellow)</item>
+        <item>Rainbow (Full Spectrum)</item>
+        <item>Grayscale (Black-White)</item>
+        <item>Hot (Red-White)</item>
+        <item>Cool (Blue-Cyan)</item>
+        <item>Jet (Blue-Red)</item>
+    </string-array>
+    
+    <string-array name="thermal_palette_values">
+        <item>iron</item>
+        <item>rainbow</item>
+        <item>grayscale</item>
+        <item>hot</item>
+        <item>cool</item>
+        <item>jet</item>
+    </string-array>
+
 </resources>

@@ -60,7 +60,7 @@ class BluetoothDeviceActivity : AppCompatActivity() {
         }
     }
     
-    // Broadcast receiver for device discovery
+    // Broadcast receiver for device discovery and pairing
     private val discoveryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -77,6 +77,13 @@ class BluetoothDeviceActivity : AppCompatActivity() {
                     binding.progressBar.visibility = View.GONE
                     binding.btnScan.text = getString(R.string.bluetooth_scan)
                     binding.btnScan.isEnabled = true
+                }
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+                    val previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE)
+                    
+                    device?.let { handleBondStateChange(it, bondState, previousBondState) }
                 }
             }
         }
@@ -141,6 +148,7 @@ class BluetoothDeviceActivity : AppCompatActivity() {
             addAction(BluetoothDevice.ACTION_FOUND)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+            addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
         registerReceiver(discoveryReceiver, filter)
     }
@@ -242,18 +250,98 @@ class BluetoothDeviceActivity : AppCompatActivity() {
             // Stop discovery to save resources
             bluetoothAdapter?.cancelDiscovery()
             
+            // Check if device is already paired
+            if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                // Device is already paired, proceed with connection
+                Timber.d("Device already paired: ${device.name} (${device.address})")
+                proceedWithConnection(device)
+            } else {
+                // Device not paired, initiate pairing process
+                Timber.d("Initiating pairing with device: ${device.name} (${device.address})")
+                
+                // Show pairing status
+                Toast.makeText(this, "Initiating pairing with ${device.name ?: "device"}...", Toast.LENGTH_SHORT).show()
+                
+                // Start pairing process - this will show the Android system pairing dialog
+                val pairingResult = device.createBond()
+                
+                if (pairingResult) {
+                    Timber.d("Pairing initiated successfully for ${device.name}")
+                    // The pairing process will continue in the background
+                    // The system will show the pairing dialog if needed
+                    // We'll handle the result in the BroadcastReceiver
+                } else {
+                    Timber.w("Failed to initiate pairing for ${device.name}")
+                    Toast.makeText(this, "Failed to start pairing process", Toast.LENGTH_SHORT).show()
+                }
+            }
+            
+        } catch (e: SecurityException) {
+            Timber.e(e, "Security exception connecting to device")
+            Toast.makeText(this, "Permission denied for device connection", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Timber.e(e, "Unexpected error during device connection")
+            Toast.makeText(this, "Error connecting to device: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Handle Bluetooth device bond state changes
+     */
+    private fun handleBondStateChange(device: BluetoothDevice, bondState: Int, previousBondState: Int) {
+        try {
+            val deviceName = device.name ?: "Unknown Device"
+            
+            when (bondState) {
+                BluetoothDevice.BOND_BONDING -> {
+                    Timber.d("Pairing in progress with $deviceName")
+                    Toast.makeText(this, "Pairing with $deviceName...", Toast.LENGTH_SHORT).show()
+                    // Update UI to show pairing in progress
+                    deviceAdapter.notifyDataSetChanged()
+                }
+                BluetoothDevice.BOND_BONDED -> {
+                    Timber.d("Successfully paired with $deviceName")
+                    Toast.makeText(this, "Successfully paired with $deviceName", Toast.LENGTH_SHORT).show()
+                    // Update UI to show paired status
+                    deviceAdapter.notifyDataSetChanged()
+                    // Proceed with connection after successful pairing
+                    proceedWithConnection(device)
+                }
+                BluetoothDevice.BOND_NONE -> {
+                    if (previousBondState == BluetoothDevice.BOND_BONDING) {
+                        Timber.w("Pairing failed with $deviceName")
+                        Toast.makeText(this, "Pairing failed with $deviceName", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Timber.d("Device $deviceName unpaired")
+                    }
+                    // Update UI to show unpaired status
+                    deviceAdapter.notifyDataSetChanged()
+                }
+            }
+        } catch (e: SecurityException) {
+            Timber.e(e, "Security exception handling bond state change")
+        }
+    }
+    
+    /**
+     * Proceed with connection after successful pairing
+     */
+    private fun proceedWithConnection(device: BluetoothDevice) {
+        try {
             // Return device address to calling activity
             val resultIntent = Intent().apply {
                 putExtra(EXTRA_DEVICE_ADDRESS, device.address)
                 putExtra(EXTRA_DEVICE_NAME, device.name ?: "Unknown Device")
             }
             setResult(RESULT_OK, resultIntent)
+            
+            Toast.makeText(this, "Connected to ${device.name ?: "device"}", Toast.LENGTH_SHORT).show()
             finish()
             
-            Timber.d("Selected device: ${device.name} (${device.address})")
+            Timber.d("Successfully connected to device: ${device.name} (${device.address})")
             
         } catch (e: SecurityException) {
-            Timber.e(e, "Security exception connecting to device")
+            Timber.e(e, "Security exception during connection finalization")
             Toast.makeText(this, "Permission denied for device connection", Toast.LENGTH_SHORT).show()
         }
     }
@@ -271,7 +359,13 @@ class BluetoothDeviceActivity : AppCompatActivity() {
         super.onDestroy()
         
         try {
-            bluetoothAdapter?.cancelDiscovery()
+            // Cancel discovery with proper permission handling
+            try {
+                bluetoothAdapter?.cancelDiscovery()
+            } catch (e: SecurityException) {
+                Timber.w(e, "Permission denied when canceling discovery")
+            }
+            
             unregisterReceiver(discoveryReceiver)
         } catch (e: Exception) {
             Timber.e(e, "Error during cleanup")
@@ -301,6 +395,7 @@ class BluetoothDeviceAdapter(
         val deviceName: android.widget.TextView = view.findViewById(R.id.tv_device_name)
         val deviceAddress: android.widget.TextView = view.findViewById(R.id.tv_device_address)
         val deviceStatus: android.widget.TextView = view.findViewById(R.id.tv_device_status)
+        val connectButton: android.widget.TextView = view.findViewById(R.id.tv_connect)
     }
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
@@ -315,12 +410,32 @@ class BluetoothDeviceAdapter(
         try {
             holder.deviceName.text = device.name ?: "Unknown Device"
             holder.deviceAddress.text = device.address
-            holder.deviceStatus.text = when (device.bondState) {
-                BluetoothDevice.BOND_BONDED -> "Paired"
-                BluetoothDevice.BOND_BONDING -> "Pairing..."
-                else -> "Not Paired"
+            
+            // Update status and connect button based on pairing state
+            when (device.bondState) {
+                BluetoothDevice.BOND_BONDED -> {
+                    holder.deviceStatus.text = "Paired"
+                    holder.connectButton.text = "Connect"
+                    holder.connectButton.isEnabled = true
+                }
+                BluetoothDevice.BOND_BONDING -> {
+                    holder.deviceStatus.text = "Pairing..."
+                    holder.connectButton.text = "Pairing..."
+                    holder.connectButton.isEnabled = false
+                }
+                else -> {
+                    holder.deviceStatus.text = "Not Paired"
+                    holder.connectButton.text = "Pair & Connect"
+                    holder.connectButton.isEnabled = true
+                }
             }
             
+            // Set click listener on the connect button
+            holder.connectButton.setOnClickListener {
+                onDeviceClick(device)
+            }
+            
+            // Also keep the item click for backward compatibility
             holder.itemView.setOnClickListener {
                 onDeviceClick(device)
             }
@@ -329,6 +444,8 @@ class BluetoothDeviceAdapter(
             holder.deviceName.text = "Permission Required"
             holder.deviceAddress.text = device.address
             holder.deviceStatus.text = "Access Denied"
+            holder.connectButton.text = "No Permission"
+            holder.connectButton.isEnabled = false
         }
     }
     

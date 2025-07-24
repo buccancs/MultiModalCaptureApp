@@ -57,6 +57,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _networkStatus = MutableLiveData<String>(context.getString(R.string.status_network_disconnected))
     val networkStatus: LiveData<String> = _networkStatus
     
+    // Connection status tracking
+    private val _isConnected = MutableLiveData<Boolean>(false)
+    val isConnected: LiveData<Boolean> = _isConnected
+    
     // Sensor values
     private val _gsrValue = MutableLiveData<Double>(0.0)
     val gsrValue: LiveData<Double> = _gsrValue
@@ -71,6 +75,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _errorMessage = MutableLiveData<String>("")
     val errorMessage: LiveData<String> = _errorMessage
     
+    // Initialization status
+    private val _initializationComplete = MutableLiveData<Boolean>(false)
+    val initializationComplete: LiveData<Boolean> = _initializationComplete
+    
     init {
         Timber.d("MainViewModel initialized")
     }
@@ -83,11 +91,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             cameraManager.getPreviewSurface()?.setSurfaceProvider(previewView.surfaceProvider)
         }
     }
+
+    /**
+     * Setup thermal camera preview ImageView
+     */
+    fun setupThermalPreview(imageView: android.widget.ImageView) {
+        if (::thermalCameraManager.isInitialized) {
+            thermalCameraManager.setPreviewImageView(imageView)
+        }
+    }
     
     /**
      * Initialize all capture modules
      */
-    fun initializeCaptureModules() {
+    fun initializeCaptureModules(lifecycleOwner: androidx.lifecycle.LifecycleOwner) {
         viewModelScope.launch {
             try {
                 Timber.d("Initializing capture modules...")
@@ -96,7 +113,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 timestampManager = TimestampManager()
                 
                 // Initialize camera manager
-                cameraManager = CameraManager(context)
+                cameraManager = CameraManager(context, lifecycleOwner)
                 cameraManager.setStatusCallback { status ->
                     _cameraStatus.postValue(status)
                 }
@@ -111,6 +128,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 gsrSensorManager = GSRSensorManager(context)
                 gsrSensorManager.setStatusCallback { status ->
                     _gsrStatus.postValue(status)
+                    // Update connection status based on GSR status
+                    val isConnected = status.contains("connected", ignoreCase = true) || 
+                                    status.contains("ready", ignoreCase = true)
+                    _isConnected.postValue(isConnected)
                 }
                 gsrSensorManager.setDataCallback { gsrValue, heartRate, prr ->
                     _gsrValue.postValue(gsrValue)
@@ -132,20 +153,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 
                 Timber.d("All capture modules initialized successfully")
                 
+                // Notify that initialization is complete
+                _initializationComplete.postValue(true)
+                
             } catch (e: Exception) {
                 Timber.e(e, "Failed to initialize capture modules")
                 _errorMessage.postValue("Failed to initialize capture modules: ${e.message}")
+                _initializationComplete.postValue(false)
             }
         }
     }
     
     /**
-     * Start recording session
+     * Start recording session with configured parameters
      */
     fun startRecording(sessionId: String, startTimestamp: Long) {
         viewModelScope.launch {
             try {
                 Timber.d("Starting recording session: $sessionId")
+                
+                // Load current recording configuration
+                val settingsManager = com.multimodal.capture.utils.SettingsManager.getInstance(context)
+                val recordingConfig = settingsManager.loadRecordingConfig()
+                
+                Timber.d("Using recording configuration: ${recordingConfig.getSummary()}")
                 
                 _currentSessionId.postValue(sessionId)
                 _isRecording.postValue(true)
@@ -153,16 +184,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Set unified timestamp reference
                 timestampManager.setSessionStartTime(startTimestamp)
                 
-                // Start all capture modules
-                cameraManager.startRecording(sessionId, startTimestamp)
-                thermalCameraManager.startRecording(sessionId, startTimestamp)
-                gsrSensorManager.startRecording(sessionId, startTimestamp)
-                audioRecorderManager.startRecording(sessionId, startTimestamp)
+                // Start capture modules based on configuration
+                if (recordingConfig.camera.enabled) {
+                    Timber.d("Starting camera recording with config: ${recordingConfig.camera.getSummary()}")
+                    cameraManager.startRecording(sessionId, startTimestamp)
+                } else {
+                    Timber.d("Camera recording disabled in configuration")
+                }
                 
-                // Notify network manager
+                if (recordingConfig.thermal.enabled) {
+                    Timber.d("Starting thermal recording with config: ${recordingConfig.thermal.getSummary()}")
+                    thermalCameraManager.startRecording(sessionId, startTimestamp)
+                } else {
+                    Timber.d("Thermal recording disabled in configuration")
+                }
+                
+                if (recordingConfig.shimmer.enabled && recordingConfig.shimmer.isConfigured()) {
+                    Timber.d("Starting GSR recording with config: ${recordingConfig.shimmer.getSummary()}")
+                    gsrSensorManager.startRecording(sessionId, startTimestamp)
+                } else {
+                    Timber.d("GSR recording disabled or not configured")
+                }
+                
+                if (recordingConfig.audio.enabled) {
+                    Timber.d("Starting audio recording with config: ${recordingConfig.audio.getSummary()}")
+                    audioRecorderManager.startRecording(sessionId, startTimestamp)
+                } else {
+                    Timber.d("Audio recording disabled in configuration")
+                }
+                
+                // Notify network manager with metadata
                 networkManager.notifyRecordingStarted(sessionId)
                 
-                Timber.d("Recording session started successfully")
+                Timber.d("Recording session started successfully with configuration")
                 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to start recording")
@@ -234,6 +288,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * Connect to a specific GSR device
+     */
+    fun connectToGSRDevice(deviceAddress: String) {
+        viewModelScope.launch {
+            try {
+                Timber.d("Connecting to GSR device: $deviceAddress")
+                gsrSensorManager.connectToDevice(deviceAddress)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to connect to GSR device")
+                _errorMessage.postValue("Failed to connect to device: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * Disconnect from GSR device
+     */
+    fun disconnectGSRDevice() {
+        viewModelScope.launch {
+            try {
+                Timber.d("Disconnecting from GSR device")
+                gsrSensorManager.disconnect()
+                _isConnected.postValue(false)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to disconnect from GSR device")
+                _errorMessage.postValue("Failed to disconnect from device: ${e.message}")
+            }
+        }
+    }
+    
+    /**
      * Handle network commands from PC
      */
     private fun handleNetworkCommand(command: String) {
@@ -246,6 +331,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (_isRecording.value != true) {
                             val sessionId = "RemoteSession_${System.currentTimeMillis()}"
                             val startTimestamp = SystemClock.elapsedRealtimeNanos()
+                            // Send recording metadata to PC before starting
+                            networkManager.sendStatusUpdate(getRecordingMetadata())
                             startRecording(sessionId, startTimestamp)
                         }
                     }
@@ -256,6 +343,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     "CMD_STATUS" -> {
                         networkManager.sendStatusUpdate(getCurrentStatus())
+                    }
+                    "CMD_GET_METADATA" -> {
+                        networkManager.sendStatusUpdate(getRecordingMetadata())
+                    }
+                    "CMD_PREPARE" -> {
+                        // Send current recording configuration to PC
+                        val metadata = getRecordingMetadata()
+                        networkManager.sendStatusUpdate(metadata)
+                        Timber.d("Sent recording metadata to PC: $metadata")
                     }
                     else -> {
                         Timber.w("Unknown network command: $command")
@@ -270,7 +366,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
-     * Get current system status
+     * Get current system status with recording configuration metadata
      */
     private fun getCurrentStatus(): Map<String, Any> {
         return mapOf(
@@ -280,16 +376,82 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             "thermalStatus" to (_thermalStatus.value ?: ""),
             "gsrStatus" to (_gsrStatus.value ?: ""),
             "networkStatus" to (_networkStatus.value ?: ""),
+            "isConnected" to (_isConnected.value ?: false),
             "gsrValue" to (_gsrValue.value ?: 0.0),
             "heartRate" to (_heartRate.value ?: 0),
-            "packetReceptionRate" to (_packetReceptionRate.value ?: 0.0)
+            "packetReceptionRate" to (_packetReceptionRate.value ?: 0.0),
+            "timestamp" to System.currentTimeMillis()
         )
+    }
+    
+    /**
+     * Get current recording configuration metadata for PC transmission
+     */
+    fun getRecordingMetadata(): Map<String, Any> {
+        return try {
+            val settingsManager = com.multimodal.capture.utils.SettingsManager.getInstance(context)
+            val recordingConfig = settingsManager.loadRecordingConfig()
+            recordingConfig.toMetadataMap()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get recording metadata")
+            mapOf(
+                "error" to "Failed to load recording configuration",
+                "timestamp" to System.currentTimeMillis()
+            )
+        }
+    }
+    
+    /**
+     * Clean up capture modules when permissions are denied (without destroying ViewModel)
+     */
+    fun cleanupCaptureModules() {
+        viewModelScope.launch {
+            try {
+                Timber.d("Cleaning up capture modules due to permission denial")
+                
+                if (_isRecording.value == true) {
+                    stopRecording()
+                }
+                
+                // Clean up managers
+                if (::cameraManager.isInitialized) {
+                    cameraManager.cleanup()
+                }
+                if (::thermalCameraManager.isInitialized) {
+                    thermalCameraManager.cleanup()
+                }
+                if (::gsrSensorManager.isInitialized) {
+                    gsrSensorManager.cleanup()
+                }
+                if (::audioRecorderManager.isInitialized) {
+                    audioRecorderManager.cleanup()
+                }
+                if (::networkManager.isInitialized) {
+                    networkManager.cleanup()
+                }
+                
+                // Reset initialization state to allow re-initialization
+                _initializationComplete.postValue(false)
+                
+                // Reset status values
+                _cameraStatus.postValue("Camera Disconnected")
+                _thermalStatus.postValue("Thermal Disconnected")
+                _gsrStatus.postValue("GSR Disconnected")
+                _networkStatus.postValue("Network Disconnected")
+                
+                Timber.d("Capture modules cleaned up successfully")
+                
+            } catch (e: Exception) {
+                Timber.e(e, "Error during capture modules cleanup")
+                _errorMessage.postValue("Failed to cleanup capture modules: ${e.message}")
+            }
+        }
     }
     
     override fun onCleared() {
         super.onCleared()
         
-        // Clean up resources
+        // Clean up resources when ViewModel is destroyed
         viewModelScope.launch {
             try {
                 if (_isRecording.value == true) {

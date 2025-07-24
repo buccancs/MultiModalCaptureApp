@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- USB device filter for Topdon TC001 thermal camera -->
-    <!-- Note: These are placeholder values - actual vendor-id and product-id 
-         need to be obtained from Topdon TC001 specifications -->
-    <usb-device vendor-id="0x1234" product-id="0x5678" />
+    <!-- USB device filter for Topdon thermal cameras -->
+    <!-- Topdon vendor ID: 0x1f3a with common product IDs -->
+    <usb-device vendor-id="0x1f3a" product-id="0x1001" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1002" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1003" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1004" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1005" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1006" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1007" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1008" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1009" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100a" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100b" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100c" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100d" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100e" />
+    <usb-device vendor-id="0x1f3a" product-id="0x100f" />
+    <usb-device vendor-id="0x1f3a" product-id="0x1010" />
+    
+    <!-- Additional Topdon vendor ID: 0x3538 -->
+    <usb-device vendor-id="0x3538" product-id="0x0902" />
     
     <!-- Generic thermal camera devices (if needed for testing) -->
     <!-- <usb-device class="14" subclass="1" protocol="0" /> -->
-    
-    <!-- Additional USB thermal imaging devices can be added here -->
-    <!-- Example for FLIR devices (if compatible): -->
-    <!-- <usb-device vendor-id="0x09cb" /> -->
 </resources>

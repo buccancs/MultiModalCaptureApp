@@ -109,7 +109,7 @@ GRAFANA_PASSWORD=$(openssl rand -base64 16)
 # Network Configuration
 DASHBOARD_PORT=5000
 DEVICE_PORT=8888
-DISCOVERY_PORT=8889
+DISCOVERY_PORT=8888
 EOF
         log INFO ".env file created"
     else

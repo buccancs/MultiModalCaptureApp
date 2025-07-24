@@ -22,7 +22,7 @@ colorlog>=6.7.0
 
 # System and Platform Support
 psutil>=5.9.0
-platform-specific>=0.1.0
+# platform-specific>=0.1.0
 
 # Optional: Lab Streaming Layer Integration
 # pylsl>=1.16.0

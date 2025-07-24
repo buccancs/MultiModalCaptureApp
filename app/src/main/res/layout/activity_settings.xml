@@ -24,6 +24,19 @@
         android:id="@+id/settings_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="80dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_show_json"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="bottom"
+        android:text="Show Settings JSON"
+        android:textAllCaps="false"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        app:icon="@android:drawable/ic_menu_info_details"
+        app:iconGravity="start" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

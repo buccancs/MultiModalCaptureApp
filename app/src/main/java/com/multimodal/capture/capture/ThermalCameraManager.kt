@@ -1,10 +1,12 @@
 package com.multimodal.capture.capture
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Handler
 import android.os.Looper
+import android.widget.ImageView
 import com.multimodal.capture.R
 import com.multimodal.capture.utils.TimestampManager
 import com.multimodal.capture.network.NetworkManager
@@ -57,6 +59,7 @@ class ThermalCameraManager(
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
     private var thermalFrameCallback: ((ByteArray, Long) -> Unit)? = null
+    private var previewImageView: ImageView? = null
 
     // Capture job and output
     private var captureJob: Job? = null
@@ -333,6 +336,11 @@ class ThermalCameraManager(
             // Notify frame callback
             thermalFrameCallback?.invoke(finalFrame, timestampManager.getCurrentTimestamp())
 
+            // Update preview ImageView if available
+            previewImageView?.let { imageView ->
+                updatePreviewImageView(finalFrame)
+            }
+
             // TODO: Option to save YUV image/video or ARGB
             // This would allow saving both raw YUV422 data and processed ARGB frames
             // saveFrameData(originalYUV = frame, processedARGB = finalFrame)
@@ -520,6 +528,45 @@ class ThermalCameraManager(
      */
     fun setFrameCallback(callback: (ByteArray, Long) -> Unit) {
         thermalFrameCallback = callback
+    }
+
+    /**
+     * Set preview ImageView for thermal display
+     */
+    fun setPreviewImageView(imageView: ImageView?) {
+        previewImageView = imageView
+    }
+
+    /**
+     * Update preview ImageView with thermal frame
+     */
+    private fun updatePreviewImageView(argbFrame: ByteArray) {
+        try {
+            // Convert ARGB byte array to Bitmap
+            val width = thermalResolution.second
+            val height = thermalResolution.first
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            
+            // Copy ARGB data to bitmap
+            val intArray = IntArray(argbFrame.size / 4)
+            for (i in intArray.indices) {
+                val baseIndex = i * 4
+                val a = (argbFrame[baseIndex + 3].toInt() and 0xFF) shl 24
+                val r = (argbFrame[baseIndex + 2].toInt() and 0xFF) shl 16
+                val g = (argbFrame[baseIndex + 1].toInt() and 0xFF) shl 8
+                val b = (argbFrame[baseIndex].toInt() and 0xFF)
+                intArray[i] = a or r or g or b
+            }
+            bitmap.setPixels(intArray, 0, width, 0, 0, width, height)
+            
+            // Update ImageView on main thread
+            mainHandler.post {
+                previewImageView?.setImageBitmap(bitmap)
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to update thermal preview")
+        }
     }
 
     /**

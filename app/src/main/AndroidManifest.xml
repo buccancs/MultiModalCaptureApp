@@ -48,6 +48,9 @@
     <!-- Wake lock for continuous recording -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
+    <!-- Vibration for haptic feedback -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    
     <!-- Foreground service for background recording -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
@@ -79,6 +82,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
+            <!-- USB device attachment intent filter for Topdon thermal cameras -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
         </activity>
         
         <!-- Bluetooth device scanning activity -->
@@ -88,12 +100,19 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MultiModalCaptureApp" />
         
+        <!-- Camera preview activity -->
+        <activity
+            android:name=".ui.PreviewActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MultiModalCaptureApp" />
+        
         <!-- Settings configuration activity -->
         <activity
             android:name=".ui.SettingsActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.MultiModalCaptureApp" />
+            android:theme="@style/Theme.MultiModalCaptureApp.NoActionBar" />
         
         <!-- USB device filter for Topdon TC001 thermal camera -->
         <!-- TODO: Implement UsbDeviceActivity for thermal camera integration -->
