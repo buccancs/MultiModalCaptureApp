@@ -1,6 +1,7 @@
 """
 Device Manager for PC Controller Application.
 Handles Android device discovery, connection management, and communication.
+Extended to support PC-connected Shimmer devices.
 """
 
 import asyncio
@@ -15,6 +16,10 @@ from typing import Dict, List, Optional, Callable, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 from PyQt6.QtCore import QObject, pyqtSignal
+
+# Import Shimmer PC components
+from .shimmer_device import ShimmerDevice, ShimmerDiscovery, ShimmerDeviceStatus, ShimmerConnectionType
+from .shimmer_pc_manager import ShimmerPCManager
 
 class DeviceStatus(Enum):
     """Device connection status enumeration."""
@@ -154,7 +159,7 @@ class USBDevice:
         return f"{self.vendor_id}:{self.product_id}"
 
 class DeviceManager(QObject):
-    """Manages device discovery and connections for Android, Bluetooth, WiFi, and USB devices."""
+    """Manages device discovery and connections for Android, Bluetooth, WiFi, USB, and Shimmer devices."""
     
     # Qt signals for UI updates
     device_discovered = pyqtSignal(dict)  # Device.to_dict()
@@ -166,7 +171,7 @@ class DeviceManager(QObject):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.devices: Dict[str, Union[AndroidDevice, BluetoothDevice, WiFiDevice, USBDevice]] = {}
+        self.devices: Dict[str, Union[AndroidDevice, BluetoothDevice, WiFiDevice, USBDevice, ShimmerDevice]] = {}
         self.connections: Dict[str, 'DeviceConnection'] = {}
         
         # Discovery components
@@ -182,11 +187,88 @@ class DeviceManager(QObject):
         self.wifi_thread: Optional[threading.Thread] = None
         self.wifi_running = False
         
+        # Shimmer discovery and management
+        self.shimmer_discovery: Optional[ShimmerDiscovery] = None
+        self.shimmer_pc_manager: Optional[ShimmerPCManager] = None
+        self.shimmer_thread: Optional[threading.Thread] = None
+        self.shimmer_running = False
+        
         # Cleanup timer
         self.cleanup_thread: Optional[threading.Thread] = None
         self.cleanup_running = False
         
-        logging.info("DeviceManager initialized")
+        # Initialize Shimmer components
+        self._initialize_shimmer_components()
+        
+        logging.info("DeviceManager initialized with Shimmer support")
+    
+    def _initialize_shimmer_components(self):
+        """Initialize Shimmer discovery and management components."""
+        try:
+            # Initialize Shimmer discovery
+            self.shimmer_discovery = ShimmerDiscovery()
+            
+            # Initialize Shimmer PC manager
+            self.shimmer_pc_manager = ShimmerPCManager(self.config)
+            
+            # Connect Shimmer PC manager signals
+            self.shimmer_pc_manager.device_connected.connect(self._on_shimmer_device_connected)
+            self.shimmer_pc_manager.device_disconnected.connect(self._on_shimmer_device_disconnected)
+            self.shimmer_pc_manager.data_received.connect(self._on_shimmer_data_received)
+            self.shimmer_pc_manager.status_changed.connect(self._on_shimmer_status_changed)
+            self.shimmer_pc_manager.error_occurred.connect(self._on_shimmer_error)
+            
+            logging.info("Shimmer components initialized successfully")
+            
+        except Exception as e:
+            logging.error(f"Failed to initialize Shimmer components: {e}")
+            self.shimmer_discovery = None
+            self.shimmer_pc_manager = None
+    
+    def _on_shimmer_device_connected(self, device_id: str):
+        """Handle Shimmer device connection."""
+        self.device_connected.emit(device_id)
+        logging.info(f"Shimmer device connected: {device_id}")
+    
+    def _on_shimmer_device_disconnected(self, device_id: str):
+        """Handle Shimmer device disconnection."""
+        self.device_disconnected.emit(device_id)
+        logging.info(f"Shimmer device disconnected: {device_id}")
+    
+    def _on_shimmer_data_received(self, device_id: str, data: dict):
+        """Handle Shimmer device data."""
+        self.device_data_received.emit(device_id, data)
+    
+    def _on_shimmer_status_changed(self, device_id: str, status: str):
+        """Handle Shimmer device status change."""
+        self.device_status_changed.emit(device_id, status)
+        
+        # Update device status in our registry
+        if device_id in self.devices:
+            device = self.devices[device_id]
+            if isinstance(device, ShimmerDevice):
+                if status == "connected":
+                    device.status = ShimmerDeviceStatus.CONNECTED
+                elif status == "disconnected":
+                    device.status = ShimmerDeviceStatus.DISCONNECTED
+                elif status == "recording":
+                    device.status = ShimmerDeviceStatus.STREAMING
+                elif status == "connecting":
+                    device.status = ShimmerDeviceStatus.CONNECTING
+                else:
+                    device.status = ShimmerDeviceStatus.ERROR
+    
+    def _on_shimmer_error(self, device_id: str, error_message: str):
+        """Handle Shimmer device error."""
+        logging.error(f"Shimmer device error {device_id}: {error_message}")
+        
+        # Update device status to error
+        if device_id in self.devices:
+            device = self.devices[device_id]
+            if isinstance(device, ShimmerDevice):
+                device.status = ShimmerDeviceStatus.ERROR
+        
+        self.device_status_changed.emit(device_id, "error")
     
     def start_discovery(self):
         """Start device discovery service for all device types."""
@@ -219,6 +301,15 @@ class DeviceManager(QObject):
             )
             self.wifi_thread.start()
             
+            # Start Shimmer discovery
+            if self.shimmer_discovery:
+                self.shimmer_running = True
+                self.shimmer_thread = threading.Thread(
+                    target=self._shimmer_discovery_worker,
+                    daemon=True
+                )
+                self.shimmer_thread.start()
+            
             # Start cleanup thread
             self.cleanup_running = True
             self.cleanup_thread = threading.Thread(
@@ -227,7 +318,7 @@ class DeviceManager(QObject):
             )
             self.cleanup_thread.start()
             
-            logging.info("Device discovery started for all device types")
+            logging.info("Device discovery started for all device types including Shimmer")
             
         except Exception as e:
             logging.error(f"Failed to start discovery: {e}")
@@ -240,6 +331,7 @@ class DeviceManager(QObject):
         self.discovery_running = False
         self.bluetooth_running = False
         self.wifi_running = False
+        self.shimmer_running = False
         self.cleanup_running = False
         
         if self.discovery_socket:
@@ -258,11 +350,19 @@ class DeviceManager(QObject):
             self.wifi_thread.join(timeout=2.0)
             self.wifi_thread = None
         
+        if self.shimmer_thread:
+            self.shimmer_thread.join(timeout=2.0)
+            self.shimmer_thread = None
+        
+        # Stop Shimmer discovery
+        if self.shimmer_discovery:
+            self.shimmer_discovery.stop_discovery()
+        
         if self.cleanup_thread:
             self.cleanup_thread.join(timeout=2.0)
             self.cleanup_thread = None
         
-        logging.info("Device discovery stopped for all device types")
+        logging.info("Device discovery stopped for all device types including Shimmer")
     
     def _discovery_worker(self):
         """Discovery worker thread."""
@@ -369,6 +469,50 @@ class DeviceManager(QObject):
                 
         except Exception as e:
             logging.error(f"WiFi discovery worker error: {e}")
+    
+    def _shimmer_discovery_worker(self):
+        """Shimmer device discovery worker thread."""
+        try:
+            logging.info("Starting Shimmer device discovery")
+            
+            if not self.shimmer_discovery:
+                logging.warning("Shimmer discovery not initialized")
+                return
+            
+            # Start Shimmer discovery
+            self.shimmer_discovery.start_discovery()
+            
+            while self.shimmer_running:
+                try:
+                    # Get discovered Shimmer devices
+                    discovered_devices = self.shimmer_discovery.get_discovered_devices()
+                    
+                    # Process discovered devices
+                    for device_id, shimmer_device in discovered_devices.items():
+                        if device_id not in self.devices:
+                            # Add new Shimmer device
+                            self.devices[device_id] = shimmer_device
+                            self.device_discovered.emit(shimmer_device.to_dict())
+                            logging.info(f"Discovered Shimmer device: {shimmer_device.device_name} ({device_id})")
+                        else:
+                            # Update existing device
+                            existing_device = self.devices[device_id]
+                            if isinstance(existing_device, ShimmerDevice):
+                                existing_device.last_seen = time.time()
+                    
+                    # Sleep before next discovery cycle
+                    time.sleep(5.0)
+                    
+                except Exception as e:
+                    logging.error(f"Error in Shimmer discovery cycle: {e}")
+                    time.sleep(2.0)
+            
+            # Stop discovery when thread is ending
+            self.shimmer_discovery.stop_discovery()
+            logging.info("Shimmer device discovery stopped")
+            
+        except Exception as e:
+            logging.error(f"Error in Shimmer discovery worker: {e}")
     
     def _scan_bluetooth_devices(self):
         """Scan for Bluetooth devices using system commands."""
@@ -642,7 +786,7 @@ class DeviceManager(QObject):
                 logging.error(f"Cleanup worker error: {e}")
     
     def connect_device(self, device_id: str) -> bool:
-        """Connect to a specific Android device."""
+        """Connect to a specific device (Android or Shimmer)."""
         if device_id not in self.devices:
             logging.error(f"Device not found: {device_id}")
             return False
@@ -652,6 +796,15 @@ class DeviceManager(QObject):
             return True
         
         device = self.devices[device_id]
+        
+        # Handle Shimmer devices differently
+        if isinstance(device, ShimmerDevice):
+            return self._connect_shimmer_device(device_id, device)
+        else:
+            return self._connect_android_device(device_id, device)
+    
+    def _connect_android_device(self, device_id: str, device) -> bool:
+        """Connect to an Android device."""
         device.status = DeviceStatus.CONNECTING
         self.device_status_changed.emit(device_id, device.status.value)
         
@@ -670,7 +823,7 @@ class DeviceManager(QObject):
                 device.connection_time = time.time()
                 self.device_connected.emit(device_id)
                 self.device_status_changed.emit(device_id, device.status.value)
-                logging.info(f"Connected to device: {device.device_name}")
+                logging.info(f"Connected to Android device: {device.device_name}")
                 return True
             else:
                 device.status = DeviceStatus.ERROR
@@ -678,24 +831,85 @@ class DeviceManager(QObject):
                 return False
                 
         except Exception as e:
-            logging.error(f"Failed to connect to device {device_id}: {e}")
+            logging.error(f"Failed to connect to Android device {device_id}: {e}")
             device.status = DeviceStatus.ERROR
             self.device_status_changed.emit(device_id, device.status.value)
             return False
     
+    def _connect_shimmer_device(self, device_id: str, device: ShimmerDevice) -> bool:
+        """Connect to a Shimmer device."""
+        if not self.shimmer_pc_manager:
+            logging.error("Shimmer PC Manager not initialized")
+            return False
+        
+        device.status = ShimmerDeviceStatus.CONNECTING
+        self.device_status_changed.emit(device_id, "connecting")
+        
+        try:
+            # Use ShimmerPCManager to connect to the device
+            if self.shimmer_pc_manager.connect_device(device):
+                # Store the device as "connected" in our connections dict
+                # We use the device itself as the connection object for Shimmer devices
+                self.connections[device_id] = device
+                device.status = ShimmerDeviceStatus.CONNECTED
+                device.last_seen = time.time()
+                self.device_connected.emit(device_id)
+                self.device_status_changed.emit(device_id, "connected")
+                logging.info(f"Connected to Shimmer device: {device.device_name}")
+                return True
+            else:
+                device.status = ShimmerDeviceStatus.ERROR
+                self.device_status_changed.emit(device_id, "error")
+                return False
+                
+        except Exception as e:
+            logging.error(f"Failed to connect to Shimmer device {device_id}: {e}")
+            device.status = ShimmerDeviceStatus.ERROR
+            self.device_status_changed.emit(device_id, "error")
+            return False
+    
     def disconnect_device(self, device_id: str):
-        """Disconnect from a specific Android device."""
+        """Disconnect from a specific device (Android or Shimmer)."""
+        if device_id not in self.devices:
+            logging.warning(f"Device not found for disconnection: {device_id}")
+            return
+        
+        device = self.devices[device_id]
+        
+        # Handle Shimmer devices differently
+        if isinstance(device, ShimmerDevice):
+            self._disconnect_shimmer_device(device_id, device)
+        else:
+            self._disconnect_android_device(device_id, device)
+    
+    def _disconnect_android_device(self, device_id: str, device):
+        """Disconnect from an Android device."""
         if device_id in self.connections:
             connection = self.connections.pop(device_id)
             connection.disconnect()
         
-        if device_id in self.devices:
-            device = self.devices[device_id]
-            device.status = DeviceStatus.DISCONNECTED
-            device.connection_time = None
-            self.device_disconnected.emit(device_id)
-            self.device_status_changed.emit(device_id, device.status.value)
-            logging.info(f"Disconnected from device: {device.device_name}")
+        device.status = DeviceStatus.DISCONNECTED
+        device.connection_time = None
+        self.device_disconnected.emit(device_id)
+        self.device_status_changed.emit(device_id, device.status.value)
+        logging.info(f"Disconnected from Android device: {device.device_name}")
+    
+    def _disconnect_shimmer_device(self, device_id: str, device: ShimmerDevice):
+        """Disconnect from a Shimmer device."""
+        if device_id in self.connections:
+            self.connections.pop(device_id)
+        
+        if self.shimmer_pc_manager:
+            try:
+                self.shimmer_pc_manager.disconnect_device(device_id)
+            except Exception as e:
+                logging.error(f"Error disconnecting Shimmer device {device_id}: {e}")
+        
+        device.status = ShimmerDeviceStatus.DISCONNECTED
+        device.last_seen = time.time()
+        self.device_disconnected.emit(device_id)
+        self.device_status_changed.emit(device_id, "disconnected")
+        logging.info(f"Disconnected from Shimmer device: {device.device_name}")
     
     def _handle_connection_status_change(self, device_id: str, status: str):
         """Handle connection status changes."""

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:background="@color/primary_background"
+    android:paddingHorizontal="16dp">
+
+    <!-- Left Action Icon -->
+    <ImageView
+        android:id="@+id/icon_left_action"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_arrow_back"
+        android:contentDescription="Back"
+        app:tint="@color/text_primary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Dual Tab Container (for Temperature/Observe modes) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/dual_tab_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/icon_left_action"
+        app:layout_constraintEnd_toStartOf="@id/icon_right_action2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible">
+
+        <!-- Temperature Tab -->
+        <TextView
+            android:id="@+id/tab_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:padding="10dp"
+            android:text="Temperature"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:maxLines="2"
+            android:maxWidth="100dp"
+            android:background="@drawable/bg_tab_selected"
+            android:drawablePadding="5dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tab_observe"
+            tools:text="Temperature" />
+
+        <!-- Observe Tab -->
+        <TextView
+            android:id="@+id/tab_observe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:padding="10dp"
+            android:text="Observe"
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:maxLines="2"
+            android:maxWidth="100dp"
+            android:background="@drawable/bg_tab_unselected"
+            android:drawablePadding="5dp"
+            app:layout_constraintStart_toEndOf="@id/tab_temperature"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="Observe" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Single Title Text (when dual tabs are not shown) -->
+    <TextView
+        android:id="@+id/text_single_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:text="Main Title"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="visible"
+        app:layout_constraintStart_toEndOf="@id/icon_left_action"
+        app:layout_constraintEnd_toStartOf="@id/icon_right_action2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="Thermal Camera Control" />
+
+    <!-- Right Action Icon 2 (Secondary) -->
+    <ImageView
+        android:id="@+id/icon_right_action2"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="8dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_info"
+        android:contentDescription="Info"
+        android:visibility="gone"
+        app:tint="@color/text_primary"
+        app:layout_constraintEnd_toStartOf="@id/icon_right_action"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+    <!-- Right Action Icon (Primary) -->
+    <ImageView
+        android:id="@+id/icon_right_action"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_settings"
+        android:contentDescription="Settings"
+        android:visibility="gone"
+        app:tint="@color/text_primary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

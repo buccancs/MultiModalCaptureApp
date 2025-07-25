@@ -3,11 +3,13 @@ package com.multimodal.capture.ui
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -33,7 +35,8 @@ class BluetoothDeviceActivity : AppCompatActivity() {
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
-        BluetoothAdapter.getDefaultAdapter()
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager.adapter
     }
     
     // Permission request launcher
@@ -65,7 +68,12 @@ class BluetoothDeviceActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 BluetoothDevice.ACTION_FOUND -> {
-                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    }
                     device?.let { addDiscoveredDevice(it) }
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
@@ -79,7 +87,12 @@ class BluetoothDeviceActivity : AppCompatActivity() {
                     binding.btnScan.isEnabled = true
                 }
                 BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    }
                     val bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
                     val previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE)
                     
@@ -116,10 +129,14 @@ class BluetoothDeviceActivity : AppCompatActivity() {
     }
     
     private fun setupUI() {
-        // Setup toolbar
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Bluetooth Devices"
+        // Setup toolbar without setSupportActionBar to avoid conflict with window decor
+        binding.toolbar.title = "Bluetooth Devices"
+        
+        // Use built-in back arrow from Material Design
+        binding.toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
+        binding.toolbar.setNavigationOnClickListener {
+            finish()
+        }
         
         // Setup scan button
         binding.btnScan.setOnClickListener {

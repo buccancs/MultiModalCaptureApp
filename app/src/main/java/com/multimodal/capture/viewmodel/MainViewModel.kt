@@ -13,6 +13,8 @@ import com.multimodal.capture.capture.ThermalCameraManager
 import com.multimodal.capture.capture.GSRSensorManager
 import com.multimodal.capture.capture.AudioRecorderManager
 import com.multimodal.capture.network.NetworkManager
+import com.multimodal.capture.service.RecordingService
+import com.multimodal.capture.ui.components.ThermalPreviewView
 import com.multimodal.capture.utils.TimestampManager
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -24,6 +26,9 @@ import timber.log.Timber
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     private val context = getApplication<Application>()
+    
+    // Service connection
+    private var recordingService: RecordingService? = null
     
     // Capture managers
     private lateinit var cameraManager: CameraManager
@@ -84,6 +89,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * Set the bound RecordingService instance
+     */
+    fun setRecordingService(service: RecordingService?) {
+        recordingService = service
+        Timber.d("RecordingService set in MainViewModel: ${service != null}")
+    }
+    
+    /**
+     * Get the GSR manager from the bound service
+     */
+    fun getGSRManager(): GSRSensorManager? {
+        return recordingService?.getGSRManager()
+    }
+    
+    /**
+     * Get the thermal camera manager from the bound service
+     */
+    fun getThermalManager(): ThermalCameraManager? {
+        return recordingService?.getThermalManager()
+    }
+    
+    /**
+     * Get the camera manager (placeholder for future service integration)
+     */
+    fun getCameraManager(): CameraManager? {
+        return if (::cameraManager.isInitialized) cameraManager else null
+    }
+    
+    /**
      * Setup camera preview surface
      */
     fun setupCameraPreview(previewView: PreviewView) {
@@ -119,9 +153,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 
                 // Initialize thermal camera manager
-                thermalCameraManager = ThermalCameraManager(context)
-                thermalCameraManager.setStatusCallback { status ->
-                    _thermalStatus.postValue(status)
+                Timber.d("Initializing ThermalCameraManager...")
+                try {
+                    thermalCameraManager = ThermalCameraManager(context)
+                    thermalCameraManager.setStatusCallback { status ->
+                        _thermalStatus.postValue(status)
+                    }
+                    Timber.d("ThermalCameraManager initialized successfully")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to initialize ThermalCameraManager")
+                    throw e // Re-throw to be caught by outer try-catch
                 }
                 
                 // Initialize GSR sensor manager
@@ -194,7 +235,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 
                 if (recordingConfig.thermal.enabled) {
                     Timber.d("Starting thermal recording with config: ${recordingConfig.thermal.getSummary()}")
-                    thermalCameraManager.startRecording(sessionId, startTimestamp)
+                    if (::thermalCameraManager.isInitialized) {
+                        // Create output directory for thermal data
+                        val outputDir = java.io.File(getApplication<Application>().filesDir, "sessions/$sessionId")
+                        outputDir.mkdirs()
+                        thermalCameraManager.startRecording(sessionId, outputDir)
+                    } else {
+                        Timber.w("ThermalCameraManager not initialized - skipping thermal recording")
+                        _errorMessage.postValue("Thermal camera not initialized - thermal recording skipped")
+                    }
                 } else {
                     Timber.d("Thermal recording disabled in configuration")
                 }
@@ -227,6 +276,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * Connect to thermal camera after USB permission is granted
+     */
+    fun connectToThermalCamera() {
+        viewModelScope.launch {
+            try {
+                Timber.d("Attempting to connect to thermal camera...")
+                
+                if (::thermalCameraManager.isInitialized) {
+                    val connected = thermalCameraManager.connectToThermalCamera()
+                    if (connected) {
+                        Timber.d("Successfully connected to thermal camera")
+                        _thermalStatus.postValue("Thermal Camera Connected")
+                    } else {
+                        Timber.w("Failed to connect to thermal camera")
+                        _thermalStatus.postValue("Thermal Camera Connection Failed")
+                    }
+                } else {
+                    Timber.e("ThermalCameraManager not initialized")
+                    _errorMessage.postValue("Thermal camera manager not initialized")
+                }
+                
+            } catch (e: Exception) {
+                Timber.e(e, "Error connecting to thermal camera")
+                _errorMessage.postValue("Failed to connect to thermal camera: ${e.message}")
+                _thermalStatus.postValue("Thermal Camera Error")
+            }
+        }
+    }
+    
+    /**
+     * Set thermal preview ImageView for displaying thermal frames
+     */
+    fun setThermalPreviewImageView(imageView: android.widget.ImageView?) {
+        if (::thermalCameraManager.isInitialized && imageView != null) {
+            thermalCameraManager.setPreviewImageView(imageView)
+            Timber.d("Thermal preview ImageView set")
+        } else if (imageView == null) {
+            Timber.w("ImageView is null - cannot set thermal preview")
+        } else {
+            Timber.w("ThermalCameraManager not initialized when setting preview ImageView")
+        }
+    }
+
+    /**
+     * Set thermal preview ThermalPreviewView for enhanced thermal display
+     */
+    fun setThermalPreviewView(previewView: ThermalPreviewView?) {
+        if (::thermalCameraManager.isInitialized && previewView != null) {
+            thermalCameraManager.setThermalPreviewView(previewView)
+            Timber.d("Thermal preview ThermalPreviewView set")
+        } else if (previewView == null) {
+            Timber.w("ThermalPreviewView is null - cannot set thermal preview")
+        } else {
+            Timber.w("ThermalCameraManager not initialized when setting preview ThermalPreviewView")
+        }
+    }
+
+    /**
      * Stop recording session
      */
     fun stopRecording() {
@@ -238,7 +345,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 
                 // Stop all capture modules
                 cameraManager.stopRecording()
-                thermalCameraManager.stopRecording()
+                if (::thermalCameraManager.isInitialized) {
+                    thermalCameraManager.stopRecording()
+                } else {
+                    Timber.w("ThermalCameraManager not initialized - skipping thermal recording stop")
+                }
                 gsrSensorManager.stopRecording()
                 audioRecorderManager.stopRecording()
                 

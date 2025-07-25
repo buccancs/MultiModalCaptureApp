@@ -13,6 +13,9 @@ from enum import Enum
 from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 
+# Import Shimmer device support
+from .shimmer_device import ShimmerDevice
+
 class RecordingState(Enum):
     """Recording state enumeration."""
     IDLE = "idle"
@@ -256,18 +259,72 @@ class RecordingController(QObject):
         return True
     
     def _send_start_command(self, device_id: str, session_id: str, start_timestamp: float) -> bool:
-        """Send start recording command to a device."""
-        payload = {
-            'sessionId': session_id,
-            'startTimestamp': start_timestamp,
-            'outputDirectory': str(self.config.get_output_directory())
-        }
-        
-        return self.device_manager.send_command(device_id, 'CMD_START', payload)
+        """Send start recording command to a device (Android or Shimmer)."""
+        try:
+            # Get device from device manager
+            device = None
+            for connected_device in self.device_manager.get_connected_devices():
+                if connected_device.device_id == device_id:
+                    device = connected_device
+                    break
+            
+            if not device:
+                logging.error(f"Device not found: {device_id}")
+                return False
+            
+            # Handle Shimmer devices differently
+            if isinstance(device, ShimmerDevice):
+                # Use ShimmerPCManager for PC Shimmer devices
+                if hasattr(self.device_manager, 'shimmer_pc_manager') and self.device_manager.shimmer_pc_manager:
+                    output_dir = str(self.config.get_output_directory() / session_id)
+                    return self.device_manager.shimmer_pc_manager.start_recording(
+                        device_id, session_id, output_dir
+                    )
+                else:
+                    logging.error("ShimmerPCManager not available")
+                    return False
+            else:
+                # Handle Android devices with network commands
+                payload = {
+                    'sessionId': session_id,
+                    'startTimestamp': start_timestamp,
+                    'outputDirectory': str(self.config.get_output_directory())
+                }
+                return self.device_manager.send_command(device_id, 'CMD_START', payload)
+                
+        except Exception as e:
+            logging.error(f"Failed to send start command to {device_id}: {e}")
+            return False
     
     def _send_stop_command(self, device_id: str) -> bool:
-        """Send stop recording command to a device."""
-        return self.device_manager.send_command(device_id, 'CMD_STOP')
+        """Send stop recording command to a device (Android or Shimmer)."""
+        try:
+            # Get device from device manager
+            device = None
+            for connected_device in self.device_manager.get_connected_devices():
+                if connected_device.device_id == device_id:
+                    device = connected_device
+                    break
+            
+            if not device:
+                logging.error(f"Device not found: {device_id}")
+                return False
+            
+            # Handle Shimmer devices differently
+            if isinstance(device, ShimmerDevice):
+                # Use ShimmerPCManager for PC Shimmer devices
+                if hasattr(self.device_manager, 'shimmer_pc_manager') and self.device_manager.shimmer_pc_manager:
+                    return self.device_manager.shimmer_pc_manager.stop_recording(device_id)
+                else:
+                    logging.error("ShimmerPCManager not available")
+                    return False
+            else:
+                # Handle Android devices with network commands
+                return self.device_manager.send_command(device_id, 'CMD_STOP')
+                
+        except Exception as e:
+            logging.error(f"Failed to send stop command to {device_id}: {e}")
+            return False
     
     def _send_pause_command(self, device_id: str) -> bool:
         """Send pause recording command to a device."""

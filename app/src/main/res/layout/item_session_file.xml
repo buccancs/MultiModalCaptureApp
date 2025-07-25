@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/overlay_background"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- File Icon -->
+        <ImageView
+            android:id="@+id/iv_file_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_folder"
+            app:tint="@color/purple_500"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- File Name -->
+        <TextView
+            android:id="@+id/tv_file_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintEnd_toStartOf="@id/btn_share"
+            app:layout_constraintStart_toEndOf="@id/iv_file_icon"
+            app:layout_constraintTop_toTopOf="@id/iv_file_icon"
+            tools:text="session_20240724_141100_audio.wav" />
+
+        <!-- File Type and Size -->
+        <TextView
+            android:id="@+id/tv_file_type"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/overlay_text"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/btn_share"
+            app:layout_constraintStart_toEndOf="@id/iv_file_icon"
+            app:layout_constraintTop_toBottomOf="@id/tv_file_name"
+            tools:text="Audio" />
+
+        <TextView
+            android:id="@+id/tv_file_size"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/overlay_text"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/btn_share"
+            app:layout_constraintStart_toEndOf="@id/iv_file_icon"
+            app:layout_constraintTop_toBottomOf="@id/tv_file_type"
+            tools:text="2.5 MB" />
+
+        <!-- Share Button -->
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Share file"
+            android:src="@drawable/ic_share"
+            app:tint="@color/overlay_text"
+            app:layout_constraintEnd_toStartOf="@id/btn_delete"
+            app:layout_constraintTop_toTopOf="@id/iv_file_icon" />
+
+        <!-- Delete Button -->
+        <ImageButton
+            android:id="@+id/btn_delete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete file"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/overlay_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/iv_file_icon" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

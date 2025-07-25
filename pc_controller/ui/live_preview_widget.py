@@ -20,7 +20,7 @@ from core.device_manager import DeviceManager, AndroidDevice
 
 
 class VideoStreamThread(QThread):
-    """Thread for handling video stream processing."""
+    """Thread for handling video stream processing with optimizations."""
     
     frame_ready = pyqtSignal(str, np.ndarray)  # device_id, frame
     
@@ -30,32 +30,58 @@ class VideoStreamThread(QThread):
         self.stream_url = stream_url
         self.running = False
         self.cap = None
+        self.target_fps = 15
+        self.frame_skip_count = 0
+        self.max_frame_skip = 2  # Skip frames if processing is slow
+        self.last_frame_time = 0
         
     def run(self):
-        """Main thread loop for video capture."""
+        """Main thread loop for video capture with optimizations."""
         try:
             self.cap = cv2.VideoCapture(self.stream_url)
             if not self.cap.isOpened():
                 logging.error(f"Failed to open video stream: {self.stream_url}")
                 return
             
-            # Set low quality for preview
+            # Set optimized capture properties
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-            self.cap.set(cv2.CAP_PROP_FPS, 15)
+            self.cap.set(cv2.CAP_PROP_FPS, self.target_fps)
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Reduce buffer to minimize latency
             
             self.running = True
+            frame_interval = 1000 // self.target_fps  # ms between frames
+            
             while self.running:
+                current_time = self.elapsed()
+                
                 ret, frame = self.cap.read()
                 if ret:
-                    # Resize frame for preview
-                    frame = cv2.resize(frame, (320, 240))
+                    # Implement frame skipping for performance
+                    if self.frame_skip_count > 0:
+                        self.frame_skip_count -= 1
+                        continue
+                    
+                    # Only resize if frame is not already the target size
+                    if frame.shape[:2] != (240, 320):
+                        frame = cv2.resize(frame, (320, 240), interpolation=cv2.INTER_LINEAR)
+                    
                     self.frame_ready.emit(self.device_id, frame)
+                    
+                    # Adaptive frame rate control
+                    processing_time = self.elapsed() - current_time
+                    if processing_time > frame_interval:
+                        # If processing is slow, skip next frame
+                        self.frame_skip_count = min(self.max_frame_skip, 
+                                                  int(processing_time / frame_interval))
                 else:
                     logging.warning(f"Failed to read frame from {self.device_id}")
                     break
-                    
-                self.msleep(66)  # ~15 FPS
+                
+                # Dynamic sleep based on processing time
+                elapsed = self.elapsed() - current_time
+                sleep_time = max(1, frame_interval - elapsed)
+                self.msleep(int(sleep_time))
                 
         except Exception as e:
             logging.error(f"Video stream error for {self.device_id}: {e}")

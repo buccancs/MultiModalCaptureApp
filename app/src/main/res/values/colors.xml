@@ -24,6 +24,8 @@
     <color name="status_warning">#FFFF9800</color>
     <color name="status_disabled">#FF9E9E9E</color>
     
+    
+    
     <!-- Recording button colors -->
     <color name="record_start">#FF4CAF50</color>
     <color name="record_stop">#FFF44336</color>
@@ -35,4 +37,11 @@
     <!-- Preview overlay colors -->
     <color name="overlay_background">#80000000</color>
     <color name="overlay_text">#FFFFFFFF</color>
+    
+    <!-- Splash screen colors -->
+    <color name="splash_background">#FF1A1A2E</color>
+    <color name="splash_text_primary">#FFFFFFFF</color>
+    <color name="splash_text_secondary">#FFE0E0E0</color>
+    <color name="splash_text_tertiary">#FFB0B0B0</color>
+    <color name="splash_accent">#FF3182CE</color>
 </resources>

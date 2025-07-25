@@ -73,24 +73,24 @@
         android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
         
+        <!-- Splash screen activity - app entry point -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.SplashActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.MultiModalCaptureApp">
+            android:theme="@style/Theme.MultiModalCaptureApp.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
-            <!-- USB device attachment intent filter for Topdon thermal cameras -->
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-            
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
+        </activity>
+        
+        <!-- Main activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MultiModalCaptureApp">
         </activity>
         
         <!-- Bluetooth device scanning activity -->
@@ -98,7 +98,7 @@
             android:name=".ui.BluetoothDeviceActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.MultiModalCaptureApp" />
+            android:theme="@style/Theme.MultiModalCaptureApp.NoActionBar" />
         
         <!-- Camera preview activity -->
         <activity
@@ -114,8 +114,27 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MultiModalCaptureApp.NoActionBar" />
         
-        <!-- USB device filter for Topdon TC001 thermal camera -->
-        <!-- TODO: Implement UsbDeviceActivity for thermal camera integration -->
+        <!-- Session folder browsing activity -->
+        <activity
+            android:name=".ui.SessionFolderActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MultiModalCaptureApp" />
+        
+        <!-- GSR data graph visualization activity -->
+        <activity
+            android:name=".ui.GSRGraphActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MultiModalCaptureApp" />
+        
+        <!-- Splash screen preview activity -->
+        <activity
+            android:name=".ui.SplashPreviewActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MultiModalCaptureApp.NoActionBar" />
+        
         
         <!-- Recording service for background operation -->
         <service
@@ -140,6 +159,23 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        
+        <!-- Disable Firebase auto-initialization to handle dummy configurations gracefully -->
+        <meta-data
+            android:name="firebase_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
         
     </application>
 

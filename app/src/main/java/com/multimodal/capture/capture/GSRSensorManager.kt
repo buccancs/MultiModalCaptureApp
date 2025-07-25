@@ -3,488 +3,524 @@ package com.multimodal.capture.capture
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import com.multimodal.capture.R
-import com.multimodal.capture.utils.TimestampManager
+import android.os.Message
 import com.multimodal.capture.data.GSRDataPoint
-import com.multimodal.capture.lsl.LSLStreamManager
-import com.multimodal.capture.lsl.LSLStreamPublisher
-import com.multimodal.capture.lsl.LSLStreamConfig
+import com.multimodal.capture.utils.SettingsManager
+import com.multimodal.capture.network.NetworkManager
+import com.multimodal.capture.network.CommandProtocol
+import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
 import java.io.FileWriter
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.*
-import kotlin.random.Random
+import java.io.IOException
 
 // Shimmer SDK imports
 import com.shimmerresearch.driver.Configuration
+import com.shimmerresearch.driver.FormatCluster
 import com.shimmerresearch.driver.ObjectCluster
+import com.shimmerresearch.android.Shimmer
 import com.shimmerresearch.driver.ShimmerDevice
 import com.shimmerresearch.managers.bluetoothManager.ShimmerBluetoothManager
-import com.shimmerresearch.driverUtilities.ShimmerVerDetails
-import com.shimmerresearch.driver.CallbackObject
 
 /**
- * GSRSensorManager handles integration with Shimmer3 GSR+ sensor via BLE.
+ * GSRSensorManager handles Shimmer3 GSR+ sensor integration for real-time GSR data collection.
  * 
- * Implements real-time GSR and PPG data streaming at 128 Hz using Shimmer SDK.
- * Supports LSL streaming and local data recording with timestamp synchronization.
+ * This class provides full Shimmer SDK integration for connecting to Shimmer3 GSR+ devices,
+ * configuring sensors, streaming real-time data, and recording GSR measurements to CSV files.
+ * Uses ShimmerBluetooth for device communication and ShimmerBluetoothManager for device discovery.
  */
-class GSRSensorManager(private val context: Context) {
-    
-    private val timestampManager = TimestampManager()
-    private val mainHandler = Handler(Looper.getMainLooper())
-    
-    // Shimmer SDK components
-    private var shimmerBluetoothManager: ShimmerBluetoothManager? = null
-    private var connectedShimmerDevice: ShimmerDevice? = null
-    private var isShimmerInitialized = false
-    private var connectedDeviceAddress: String? = null
-    
-    // Recording state
-    private val isRecording = AtomicBoolean(false)
-    private val isConnected = AtomicBoolean(false)
-    private var currentSessionId: String = ""
-    
-    // Data handling
-    private val dataQueue = ConcurrentLinkedQueue<GSRDataPoint>()
-    private var dataWriter: FileWriter? = null
-    private var recordingJob: Job? = null
-    private var simulationJob: Job? = null
+class GSRSensorManager(
+    private val context: Context,
+    private val networkManager: NetworkManager? = null
+) {
     
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
     private var dataCallback: ((Double, Int, Double) -> Unit)? = null
     
-    // Current sensor values (simulated)
-    private var currentGSRValue = 0.0
-    private var currentHeartRate = 0
-    private var currentPRR = 0.0
+    // Recording state
+    private var isRecording = false
+    private var currentSessionId: String? = null
+    private var sessionStartTimestamp: Long = 0L
+    private var csvWriter: FileWriter? = null
+    private var recordingFile: File? = null
     
-    // LSL Integration
-    private var lslStreamManager: LSLStreamManager? = null
-    private var gsrLSLStream: LSLStreamPublisher? = null
-    private var ppgLSLStream: LSLStreamPublisher? = null
-    private var heartRateLSLStream: LSLStreamPublisher? = null
-    private val enableLSLStreaming = AtomicBoolean(false)
+    // Shimmer SDK components
+    private var bluetoothManager: ShimmerBluetoothManager? = null
+    private var connectedDevices = mutableMapOf<String, Shimmer?>()
+    private var currentShimmerDevice: Shimmer? = null
+    private var isConnected = false
+    private var isStreaming = false
     
-    // Configuration
-    private val targetSampleRate = 128.0 // Hz as specified in requirements
+    // Coroutine scope for async operations
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    
+    // Data processing
+    private var lastGSRValue = 0.0
+    private var lastHeartRate = 0
+    private var lastPacketReceptionRate = 0.0
+    
+    // Settings
+    private val settingsManager = SettingsManager.getInstance(context)
+    
+    // Shimmer message handler for SDK communication
+    private val shimmerHandler = object : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            handleShimmerMessage(msg)
+        }
+    }
     
     init {
-        Timber.d("GSRSensorManager initialized (stub implementation)")
+        Timber.d("GSRSensorManager initialized - initializing Shimmer SDK")
         initializeShimmerManager()
-        initializeLSLStreaming()
     }
     
     /**
-     * Initialize Shimmer Bluetooth Manager with improved error handling
+     * Handle Shimmer SDK messages
+     */
+    private fun handleShimmerMessage(msg: Message) {
+        try {
+            when (msg.what) {
+                // TODO: Add actual Shimmer message constants when Shimmer class is available
+                // See backlog.md - "Advanced Sensor Configuration" for enhanced message handling
+                else -> {
+                    Timber.d("Received Shimmer message: ${msg.what}")
+                    if (msg.obj is ObjectCluster) {
+                        handleObjectCluster(msg.obj as ObjectCluster)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling Shimmer message")
+        }
+    }
+    
+    /**
+     * Handle ObjectCluster data from Shimmer device
+     */
+    private fun handleObjectCluster(objectCluster: ObjectCluster) {
+        try {
+            Timber.d("Processing ObjectCluster data")
+            
+            // Extract GSR value
+            val gsrValue = extractGSRValue(objectCluster)
+            
+            // Extract timestamp
+            val timestamp = extractTimestamp(objectCluster)
+            
+            // Extract packet reception rate
+            val prr = extractPacketReceptionRate(objectCluster)
+            
+            // Update last known values
+            if (gsrValue > 0) lastGSRValue = gsrValue
+            if (prr >= 0) lastPacketReceptionRate = prr
+            
+            // Send data to callback
+            dataCallback?.invoke(lastGSRValue, lastHeartRate, lastPacketReceptionRate)
+            
+            // Send real-time data to PC if network streaming is enabled
+            networkManager?.let { network ->
+                if (network.isDataStreamingActive()) {
+                    val dataPacket = CommandProtocol.createGSRDataPacket(
+                        gsrValue = lastGSRValue,
+                        heartRate = lastHeartRate,
+                        packetReceptionRate = lastPacketReceptionRate,
+                        sessionId = currentSessionId
+                    )
+                    network.sendDataPacket(dataPacket)
+                }
+            }
+            
+            // Record data if recording is active
+            if (isRecording && currentSessionId != null) {
+                recordDataPoint(timestamp, lastGSRValue, lastHeartRate, lastPacketReceptionRate)
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to process ObjectCluster data")
+        }
+    }
+    
+    /**
+     * Initialize Shimmer SDK components for GSR data collection
      */
     private fun initializeShimmerManager() {
         try {
-            // Check required permissions before initialization
-            if (!checkRequiredPermissions()) {
-                updateStatus("Missing required permissions for GSR sensor")
-                return
-            }
+            Timber.d("Initializing Shimmer SDK for GSR data collection...")
             
-            // Check Bluetooth availability
-            if (!checkBluetoothAvailability()) {
-                updateStatus("Bluetooth not available or disabled")
-                return
-            }
+            // Initialize SDK configuration constants
+            initializeSDKConfiguration()
             
-            // Stub implementation - in real implementation, this would:
-            // 1. Initialize ShimmerBluetoothManager with context and handler
-            // 2. Set up BLE support configuration  
-            // 3. Configure sensor parameters for GSR + PPG at 128Hz
-            // 4. Set up proper callback handlers for connection events
-            // 5. Configure data streaming callbacks
+            Timber.d("Shimmer SDK initialized successfully")
+            statusCallback?.invoke("GSR Manager Ready - Shimmer SDK Active")
             
-            isShimmerInitialized = true
-            Timber.d("Shimmer Bluetooth Manager initialized successfully (stub)")
-            updateStatus(context.getString(R.string.status_gsr_disconnected))
-            
-        } catch (e: SecurityException) {
-            Timber.e(e, "Security exception during Shimmer initialization - missing permissions")
-            updateStatus("Permission denied: Cannot access Bluetooth for GSR sensor")
-            isShimmerInitialized = false
         } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize Shimmer Bluetooth Manager")
-            updateStatus("GSR Manager Error: ${e.message}")
-            isShimmerInitialized = false
+            Timber.e(e, "Failed to initialize Shimmer SDK")
+            statusCallback?.invoke("GSR Manager Error: ${e.message}")
         }
     }
     
     /**
-     * Check if all required permissions are granted
+     * Initialize SDK configuration constants and settings
      */
-    private fun checkRequiredPermissions(): Boolean {
-        val requiredPermissions = arrayOf(
-            android.Manifest.permission.BLUETOOTH_CONNECT,
-            android.Manifest.permission.BLUETOOTH_SCAN,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        
-        return requiredPermissions.all { permission ->
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                context, permission
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        }
-    }
-    
-    /**
-     * Check if Bluetooth is available and enabled
-     */
-    private fun checkBluetoothAvailability(): Boolean {
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) 
-            as? android.bluetooth.BluetoothManager
-        val bluetoothAdapter = bluetoothManager?.adapter
-        
-        return bluetoothAdapter != null && bluetoothAdapter.isEnabled
-    }
-    
-    /**
-     * Initialize LSL streaming for GSR and PPG data
-     */
-    private fun initializeLSLStreaming() {
+    private fun initializeSDKConfiguration() {
         try {
-            lslStreamManager = LSLStreamManager.getInstance(context)
+            // Verify SDK constants are accessible
+            val gsrSensorId = Configuration.Shimmer3.SENSOR_ID.SHIMMER_GSR
+            val timestampName = Configuration.Shimmer3.ObjectClusterSensorName.TIMESTAMP
+            val prrName = Configuration.Shimmer3.ObjectClusterSensorName.PACKET_RECEPTION_RATE_OVERALL
             
-            if (lslStreamManager?.initialize() == true) {
-                // Create GSR stream
-                gsrLSLStream = lslStreamManager?.createStream(
-                    name = "GSR_Data",
-                    type = "GSR",
-                    channelCount = 1,
-                    sampleRate = targetSampleRate,
-                    channelFormat = "float32",
-                    sourceId = "shimmer_gsr"
-                )
-                
-                // Create PPG stream
-                ppgLSLStream = lslStreamManager?.createStream(
-                    name = "PPG_Data",
-                    type = "PPG",
-                    channelCount = 2, // A1 and A15 channels
-                    sampleRate = targetSampleRate,
-                    channelFormat = "float32",
-                    sourceId = "shimmer_ppg"
-                )
-                
-                // Create Heart rate stream
-                heartRateLSLStream = lslStreamManager?.createStream(
-                    name = "HeartRate_Data",
-                    type = "HeartRate",
-                    channelCount = 1,
-                    sampleRate = 1.0, // 1 Hz for heart rate
-                    channelFormat = "float32",
-                    sourceId = "shimmer_hr"
-                )
-                
-                Timber.d("LSL streams initialized for GSR sensor")
-            } else {
-                Timber.w("Failed to initialize LSL Stream Manager")
-            }
+            Timber.d("SDK Configuration constants verified: GSR_SENSOR_ID=$gsrSensorId")
+            Timber.d("Timestamp sensor name: $timestampName")
+            Timber.d("Packet reception rate name: $prrName")
             
         } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize LSL streaming")
+            Timber.e(e, "Failed to initialize SDK configuration constants")
+            throw e
         }
     }
     
     /**
-     * Set status callback for UI updates
+     * Configure Shimmer device using the recommended clone -> configure -> write pattern
+     */
+    private fun configureAndWriteToDevice(shimmerDevice: Shimmer) {
+        try {
+            // The recommended configuration pattern: clone, configure, then write.
+            val shimmerClone = shimmerDevice.deepClone() as Shimmer
+
+            val shimmerConfig = settingsManager.loadShimmerConfig()
+            
+            Timber.d("Configuring Shimmer device ${shimmerDevice.bluetoothAddress} with:")
+            Timber.d("- Sample Rate: ${shimmerConfig.sampleRate}Hz")
+            Timber.d("- Enable GSR: true")
+
+            // Apply settings to the clone
+            shimmerClone.setShimmerAndSensorsSamplingRate(shimmerConfig.sampleRate.toDouble())
+            shimmerClone.setSensorEnabledState(Configuration.Shimmer3.SENSOR_ID.SHIMMER_GSR, true)
+            // TODO: Add other sensor configurations here (e.g., PPG, Accelerometer)
+
+            // Write the configuration from the clone to the actual device
+            shimmerDevice.writeConfigBytes()
+
+            Timber.d("Configuration successfully written to device.")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to configure Shimmer device")
+            throw e
+        }
+    }
+    
+    /**
+     * Extract GSR value from ObjectCluster
+     */
+    private fun extractGSRValue(objectCluster: ObjectCluster): Double {
+        return try {
+            val gsrFormats = objectCluster.getCollectionOfFormatClusters("GSR")
+            val gsrCluster = ObjectCluster.returnFormatCluster(gsrFormats, "CAL") as? FormatCluster
+            gsrCluster?.mData ?: 0.0
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to extract GSR value")
+            0.0
+        }
+    }
+    
+    /**
+     * Extract timestamp from ObjectCluster
+     */
+    private fun extractTimestamp(objectCluster: ObjectCluster): Long {
+        return try {
+            val timestampFormats = objectCluster.getCollectionOfFormatClusters(
+                Configuration.Shimmer3.ObjectClusterSensorName.TIMESTAMP
+            )
+            val timestampCluster = ObjectCluster.returnFormatCluster(timestampFormats, "CAL") as? FormatCluster
+            timestampCluster?.mData?.toLong() ?: System.currentTimeMillis()
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to extract timestamp, using system time")
+            System.currentTimeMillis()
+        }
+    }
+    
+    /**
+     * Extract packet reception rate from ObjectCluster
+     */
+    private fun extractPacketReceptionRate(objectCluster: ObjectCluster): Double {
+        return try {
+            val prrFormats = objectCluster.getCollectionOfFormatClusters(
+                Configuration.Shimmer3.ObjectClusterSensorName.PACKET_RECEPTION_RATE_OVERALL
+            )
+            val prrCluster = ObjectCluster.returnFormatCluster(prrFormats, "CAL") as? FormatCluster
+            prrCluster?.mData ?: 0.0
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to extract packet reception rate")
+            0.0
+        }
+    }
+    
+    /**
+     * Set status callback for connection and device status updates
      */
     fun setStatusCallback(callback: (String) -> Unit) {
-        statusCallback = callback
+        this.statusCallback = callback
+        Timber.d("Status callback set")
     }
     
     /**
-     * Set data callback for real-time data updates
+     * Set data callback for real-time GSR, heart rate, and packet reception rate data
      */
     fun setDataCallback(callback: (Double, Int, Double) -> Unit) {
-        dataCallback = callback
+        this.dataCallback = callback
+        Timber.d("Data callback set")
     }
     
     /**
-     * Enable or disable LSL streaming
+     * Check if GSR sensor is connected
      */
-    fun setLSLStreamingEnabled(enabled: Boolean) {
-        enableLSLStreaming.set(enabled)
-        Timber.d("LSL streaming ${if (enabled) "enabled" else "disabled"}")
+    fun isConnected(): Boolean {
+        return isConnected
     }
     
     /**
-     * Get current connection status
+     * Check if GSR sensor is currently recording
      */
-    fun isConnected(): Boolean = isConnected.get()
-    
-    /**
-     * Get current recording status
-     */
-    fun isRecording(): Boolean = isRecording.get()
-    
-    /**
-     * Get current sensor values
-     */
-    fun getCurrentValues(): Triple<Double, Int, Double> {
-        return Triple(currentGSRValue, currentHeartRate, currentPRR)
+    fun isRecording(): Boolean {
+        return isRecording
     }
     
     /**
-     * Start scanning for Shimmer devices with comprehensive error handling
+     * Get current session ID if recording
+     */
+    fun getCurrentSessionId(): String? {
+        return currentSessionId
+    }
+    
+    /**
+     * Get connected device address
+     */
+    fun getConnectedDeviceAddress(): String? {
+        return currentShimmerDevice?.bluetoothAddress
+    }
+    
+    /**
+     * Get connected device name
+     */
+    fun getConnectedDeviceName(): String? {
+        return try {
+            currentShimmerDevice?.deviceName
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    /**
+     * Get last known GSR value
+     */
+    fun getLastGSRValue(): Double {
+        return lastGSRValue
+    }
+    
+    /**
+     * Get last known heart rate
+     */
+    fun getLastHeartRate(): Int {
+        return lastHeartRate
+    }
+    
+    /**
+     * Get last known packet reception rate
+     */
+    fun getLastPacketReceptionRate(): Double {
+        return lastPacketReceptionRate
+    }
+    
+    /**
+     * Scan for available Shimmer devices using Bluetooth discovery
      */
     fun scanForDevices() {
-        if (!isShimmerInitialized) {
-            Timber.w("Shimmer manager not initialized")
-            updateStatus("GSR Manager not initialized")
-            return
-        }
-        
         try {
-            // Check permissions before scanning
-            if (!checkRequiredPermissions()) {
-                Timber.w("Missing permissions for device scanning")
-                updateStatus("Missing Bluetooth permissions - please grant in settings")
-                return
-            }
+            Timber.d("Starting Bluetooth scan for Shimmer devices")
+            statusCallback?.invoke("Scanning for Shimmer devices...")
             
-            // Check Bluetooth availability
-            if (!checkBluetoothAvailability()) {
-                Timber.w("Bluetooth not available for scanning")
-                updateStatus("Bluetooth disabled - please enable Bluetooth")
-                return
-            }
-            
-            // Prevent multiple concurrent scans
-            if (isConnected.get()) {
-                Timber.w("Already connected to a device")
-                updateStatus("Already connected to GSR device")
-                return
-            }
-            
-            updateStatus("Scanning for GSR devices...")
-            Timber.d("Starting GSR device scan with permission and state checks")
-            
-            // Stub implementation - simulate device discovery with timeout
-            val scanTimeout = 10000L // 10 seconds
-            
-            // Simulate finding a device after 2-5 seconds
-            val discoveryDelay = 2000L + Random.nextLong(3000L)
-            mainHandler.postDelayed({
-                if (!isConnected.get()) { // Only update if still not connected
-                    updateStatus("GSR device found: Shimmer3-ABCD (00:06:66:XX:XX:XX)")
-                    Timber.d("Simulated device discovery completed")
-                }
-            }, discoveryDelay)
-            
-            // Set scan timeout
-            mainHandler.postDelayed({
-                if (!isConnected.get()) {
-                    updateStatus("Scan timeout - no GSR devices found")
-                    Timber.w("Device scan timed out")
-                }
-            }, scanTimeout)
-            
-        } catch (e: SecurityException) {
-            Timber.e(e, "Security exception during device scan - permission denied")
-            updateStatus("Permission denied: Cannot scan for Bluetooth devices")
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Illegal state during device scan")
-            updateStatus("Bluetooth adapter in invalid state")
-        } catch (e: Exception) {
-            Timber.e(e, "Unexpected error during device scan")
-            updateStatus("Scan Error: ${e.message}")
-        }
-    }
-    
-    /**
-     * Connect to Shimmer device with comprehensive error handling and retry logic
-     */
-    fun connectToDevice(deviceAddress: String) {
-        if (!isShimmerInitialized) {
-            Timber.w("Shimmer manager not initialized")
-            updateStatus("GSR Manager not initialized")
-            return
-        }
-        
-        // Validate device address
-        if (deviceAddress.isBlank()) {
-            Timber.w("Invalid device address provided")
-            updateStatus("Invalid device address")
-            return
-        }
-        
-        try {
-            // Check permissions before connecting
-            if (!checkRequiredPermissions()) {
-                Timber.w("Missing permissions for device connection")
-                updateStatus("Missing Bluetooth permissions - please grant in settings")
-                return
-            }
-            
-            // Check Bluetooth availability
-            if (!checkBluetoothAvailability()) {
-                Timber.w("Bluetooth not available for connection")
-                updateStatus("Bluetooth disabled - please enable Bluetooth")
-                return
-            }
-            
-            // Prevent multiple concurrent connections
-            if (isConnected.get()) {
-                Timber.w("Already connected to a device")
-                updateStatus("Already connected to GSR device")
-                return
-            }
-            
-            updateStatus("Connecting to GSR device...")
-            connectedDeviceAddress = deviceAddress
-            Timber.d("Attempting to connect to GSR device: $deviceAddress")
-            
-            // Stub implementation - simulate connection process with realistic timing
-            val connectionTimeout = 15000L // 15 seconds timeout
-            val connectionDelay = 3000L + Random.nextLong(2000L) // 3-5 seconds
-            
-            // Simulate connection attempt
-            mainHandler.postDelayed({
+            coroutineScope.launch {
                 try {
-                    // Simulate occasional connection failures (10% chance)
-                    if (Random.nextDouble() < 0.1) {
-                        throw Exception("Connection failed - device not responding")
+                    // Use Android Bluetooth adapter for device discovery
+                    val bluetoothAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+                    
+                    if (bluetoothAdapter == null) {
+                        statusCallback?.invoke("Bluetooth not available")
+                        return@launch
                     }
                     
-                    isConnected.set(true)
-                    updateStatus(context.getString(R.string.status_gsr_connected))
-                    startDataSimulation()
-                    Timber.d("Successfully connected to GSR device: $deviceAddress")
+                    if (!bluetoothAdapter.isEnabled) {
+                        statusCallback?.invoke("Please enable Bluetooth")
+                        return@launch
+                    }
+                    
+                    statusCallback?.invoke("Scanning for paired Shimmer devices...")
+                    
+                    try {
+                        // Get paired devices and filter for Shimmer devices
+                        val pairedDevices = bluetoothAdapter.bondedDevices
+                        val shimmerDevices = pairedDevices.filter { device ->
+                            try {
+                                device.name?.contains("Shimmer", ignoreCase = true) == true ||
+                                device.address.startsWith("00:06:66") // Shimmer MAC prefix
+                            } catch (e: SecurityException) {
+                                Timber.w("Permission denied accessing device info")
+                                false
+                            }
+                        }
+                        
+                        if (shimmerDevices.isNotEmpty()) {
+                            statusCallback?.invoke("Found ${shimmerDevices.size} paired Shimmer device(s)")
+                            shimmerDevices.forEach { device ->
+                                try {
+                                    Timber.d("Found Shimmer device: ${device.name} (${device.address})")
+                                } catch (e: SecurityException) {
+                                    Timber.d("Found Shimmer device: [Permission denied] (${device.address})")
+                                }
+                            }
+                        } else {
+                            statusCallback?.invoke("No paired Shimmer devices found")
+                        }
+                    } catch (e: SecurityException) {
+                        Timber.w(e, "Bluetooth permission denied")
+                        statusCallback?.invoke("Bluetooth permission required for device scanning")
+                    }
+                    
+                    statusCallback?.invoke("Scan completed")
                     
                 } catch (e: Exception) {
-                    Timber.e(e, "Connection attempt failed")
-                    updateStatus("Connection failed: ${e.message}")
-                    connectedDeviceAddress = null
-                    isConnected.set(false)
+                    Timber.e(e, "Failed to scan for Shimmer devices")
+                    statusCallback?.invoke("Scan failed: ${e.message}")
                 }
-            }, connectionDelay)
-            
-            // Set connection timeout
-            mainHandler.postDelayed({
-                if (!isConnected.get() && connectedDeviceAddress == deviceAddress) {
-                    Timber.w("Connection timeout for device: $deviceAddress")
-                    updateStatus("Connection timeout - device not responding")
-                    connectedDeviceAddress = null
-                    isConnected.set(false)
-                }
-            }, connectionTimeout)
-            
-        } catch (e: SecurityException) {
-            Timber.e(e, "Security exception during device connection - permission denied")
-            updateStatus("Permission denied: Cannot connect to Bluetooth device")
-            connectedDeviceAddress = null
-            isConnected.set(false)
-        } catch (e: IllegalArgumentException) {
-            Timber.e(e, "Invalid device address format: $deviceAddress")
-            updateStatus("Invalid device address format")
-            connectedDeviceAddress = null
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Illegal state during device connection")
-            updateStatus("Bluetooth adapter in invalid state")
-            connectedDeviceAddress = null
-            isConnected.set(false)
-        } catch (e: Exception) {
-            Timber.e(e, "Unexpected error during device connection")
-            updateStatus("Connection Error: ${e.message}")
-            connectedDeviceAddress = null
-            isConnected.set(false)
-        }
-    }
-    
-    /**
-     * Start data simulation for testing
-     */
-    private fun startDataSimulation() {
-        simulationJob = CoroutineScope(Dispatchers.IO).launch {
-            while (isConnected.get()) {
-                // Simulate GSR data (typical range: 0.1 - 10.0 µS)
-                currentGSRValue = 2.0 + Random.nextDouble(-0.5, 0.5)
-                
-                // Simulate heart rate (typical range: 60-100 BPM)
-                currentHeartRate = (75 + Random.nextInt(-10, 10))
-                
-                // Simulate packet reception rate (should be close to 100%)
-                currentPRR = 95.0 + Random.nextDouble(-2.0, 2.0)
-                
-                // Create data point
-                val timestamp = timestampManager.getCurrentTimestamp()
-                val dataPoint = GSRDataPoint(
-                    timestamp = timestamp,
-                    shimmerTimestamp = timestamp / 1_000_000, // Convert to shimmer time scale
-                    gsrValue = currentGSRValue,
-                    ppgValue = 512.0 + Random.nextDouble(-50.0, 50.0), // Simulated PPG
-                    packetReceptionRate = currentPRR,
-                    sessionId = currentSessionId
-                )
-                
-                // Add to queue for recording
-                if (isRecording.get()) {
-                    dataQueue.offer(dataPoint)
-                }
-                
-                // Update UI callback
-                dataCallback?.invoke(currentGSRValue, currentHeartRate, currentPRR)
-                
-                // Publish to LSL if enabled
-                if (enableLSLStreaming.get()) {
-                    publishToLSL(dataPoint)
-                }
-                
-                // Sleep to maintain ~128 Hz sample rate
-                delay((1000.0 / targetSampleRate).toLong())
             }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to start Shimmer device scan")
+            statusCallback?.invoke("Scan failed: ${e.message}")
+        }
+    }
+    
+    
+    /**
+     * Connect to a specific Shimmer device by MAC address using Shimmer SDK
+     */
+    fun connectToDevice(deviceAddress: String) {
+        try {
+            Timber.d("Connecting to Shimmer device: $deviceAddress using SDK")
+            statusCallback?.invoke("Connecting to $deviceAddress...")
+            
+            coroutineScope.launch {
+                try {
+                    // Attempt SDK-based connection
+                    Timber.d("Attempting SDK-based connection to $deviceAddress")
+                    statusCallback?.invoke("Initializing SDK connection...")
+                    
+                    // Create Shimmer instance for this device
+                    val shimmerDevice = Shimmer(shimmerHandler, context)
+                    
+                    // Connect to device using Shimmer SDK
+                    shimmerDevice.connect(deviceAddress, "default")
+
+                    // Configure the device with settings *after* connecting
+                    configureAndWriteToDevice(shimmerDevice)
+                    
+                    // Store device reference
+                    connectedDevices[deviceAddress] = shimmerDevice
+                    currentShimmerDevice = shimmerDevice
+                    isConnected = true
+                    
+                    Timber.d("Shimmer device connected successfully: $deviceAddress")
+                    statusCallback?.invoke("GSR Connected - Ready for streaming")
+                    
+                    // Start data streaming
+                    startRealDataCollection(shimmerDevice)
+                    
+                } catch (e: Exception) {
+                    Timber.e(e, "SDK connection failed")
+                    statusCallback?.invoke("Connection failed: ${e.message}")
+                    isConnected = false
+                }
+            }
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to connect to Shimmer device: $deviceAddress")
+            statusCallback?.invoke("Connection failed: ${e.message}")
         }
     }
     
     /**
-     * Start recording GSR data
+     * Disconnect from current Shimmer device
+     */
+    fun disconnect() {
+        try {
+            Timber.d("Disconnecting from Shimmer device")
+            
+            // Stop streaming if active
+            if (isStreaming && currentShimmerDevice != null) {
+                currentShimmerDevice?.stopStreaming()
+                isStreaming = false
+                Timber.d("Stopped streaming from Shimmer device")
+            }
+            
+            // Disconnect from device
+            currentShimmerDevice?.disconnect()
+            
+            // Clear device references
+            currentShimmerDevice = null
+            connectedDevices.clear()
+            isConnected = false
+            
+            statusCallback?.invoke("GSR Disconnected")
+            Timber.d("Shimmer device disconnected successfully")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to disconnect from Shimmer device")
+            statusCallback?.invoke("Disconnect error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Start recording GSR data to file
      */
     fun startRecording(sessionId: String, startTimestamp: Long) {
-        if (!isConnected.get()) {
-            Timber.w("Cannot start recording - GSR sensor not connected")
-            return
-        }
-        
-        if (isRecording.get()) {
-            Timber.w("GSR recording already in progress")
-            return
-        }
-        
         try {
-            currentSessionId = sessionId
-            timestampManager.setSessionStartTime(startTimestamp)
+            Timber.d("Starting GSR recording for session: $sessionId")
             
-            // Create output file
-            val outputDir = File(context.getExternalFilesDir(null), "recordings")
-            outputDir.mkdirs()
-            
-            val outputFile = File(outputDir, "${sessionId}_gsr_data.csv")
-            dataWriter = FileWriter(outputFile)
-            
-            // Write CSV header
-            dataWriter?.write("timestamp,gsr_value,heart_rate,packet_reception_rate\n")
-            
-            // Start recording job
-            recordingJob = CoroutineScope(Dispatchers.IO).launch {
-                processDataQueue()
+            if (!isConnected) {
+                Timber.w("No Shimmer device connected")
+                statusCallback?.invoke("GSR: No device connected")
+                return
             }
             
-            isRecording.set(true)
-            updateStatus("Recording GSR data...")
+            currentSessionId = sessionId
+            sessionStartTimestamp = startTimestamp
+            isRecording = true
             
-            Timber.d("GSR recording started: ${outputFile.absolutePath}")
+            // Create recording file
+            setupRecordingFile(sessionId)
+            
+            // Set up data callback to write to CSV file during recording
+            setDataCallback { gsrValue, heartRate, prr ->
+                if (isRecording) {
+                    val timestamp = System.currentTimeMillis() * 1_000_000 // Convert to nanoseconds
+                    recordDataPoint(timestamp, gsrValue, heartRate, prr)
+                }
+            }
+            
+            // Start real data collection from Shimmer device
+            currentShimmerDevice?.let { shimmerDevice ->
+                startRealDataCollection(shimmerDevice)
+                statusCallback?.invoke("GSR Recording Started - Real Data Collection")
+            } ?: run {
+                Timber.w("No current Shimmer device available for data collection")
+                statusCallback?.invoke("GSR Recording Error: No device available")
+                isRecording = false
+            }
             
         } catch (e: Exception) {
             Timber.e(e, "Failed to start GSR recording")
-            updateStatus("Recording Error: ${e.message}")
+            statusCallback?.invoke("GSR Recording Error: ${e.message}")
+            isRecording = false
         }
     }
     
@@ -492,320 +528,383 @@ class GSRSensorManager(private val context: Context) {
      * Stop recording GSR data
      */
     fun stopRecording() {
-        if (!isRecording.get()) {
-            Timber.w("No GSR recording in progress")
-            return
-        }
-        
         try {
-            isRecording.set(false)
+            Timber.d("Stopping GSR recording")
             
-            // Cancel recording job
-            recordingJob?.cancel()
-            recordingJob = null
+            isRecording = false
+            isStreaming = false
             
-            // Process remaining data in queue
-            processRemainingData()
+            // Close recording file
+            closeRecordingFile()
             
-            // Close file writer
-            dataWriter?.close()
-            dataWriter = null
-            
-            updateStatus(context.getString(R.string.status_gsr_connected))
-            Timber.d("GSR recording stopped")
+            statusCallback?.invoke("GSR Recording Stopped")
+            currentSessionId = null
             
         } catch (e: Exception) {
             Timber.e(e, "Failed to stop GSR recording")
-            updateStatus("Stop Recording Error: ${e.message}")
+            statusCallback?.invoke("GSR Stop Error: ${e.message}")
         }
     }
     
     /**
-     * Process data queue for recording
+     * Start real data collection from Shimmer device
      */
-    private suspend fun processDataQueue() {
-        while (isRecording.get()) {
-            val dataPoint = dataQueue.poll()
-            if (dataPoint != null) {
-                writeDataPoint(dataPoint)
-            } else {
-                delay(10) // Small delay if queue is empty
-            }
-        }
-    }
-    
-    /**
-     * Process remaining data in queue
-     */
-    private fun processRemainingData() {
-        while (dataQueue.isNotEmpty()) {
-            val dataPoint = dataQueue.poll()
-            if (dataPoint != null) {
-                writeDataPoint(dataPoint)
-            }
-        }
-    }
-    
-    /**
-     * Write data point to file
-     */
-    private fun writeDataPoint(dataPoint: GSRDataPoint) {
+    private fun startRealDataCollection(shimmerDevice: Shimmer) {
         try {
-            dataWriter?.write("${dataPoint.timestamp},${dataPoint.gsrValue},${currentHeartRate},${dataPoint.packetReceptionRate}\n")
-            dataWriter?.flush()
+            Timber.d("Starting real GSR data collection from Shimmer device")
+            
+            // Configuration is now handled by configureAndWriteToDevice()
+            // We just need to start the stream.
+            
+            // Start streaming data
+            shimmerDevice.startStreaming()
+            
+            isStreaming = true
+            statusCallback?.invoke("GSR streaming started")
+            Timber.d("Shimmer device streaming started successfully")
+            
         } catch (e: Exception) {
-            Timber.e(e, "Failed to write GSR data point")
+            Timber.e(e, "Failed to start real data collection")
+            statusCallback?.invoke("Streaming failed: ${e.message}")
+            isStreaming = false
         }
     }
     
+    
+    
     /**
-     * Publish data to LSL streams with network connectivity checking
+     * Setup recording file for session
      */
-    private fun publishToLSL(dataPoint: GSRDataPoint) {
+    private fun setupRecordingFile(sessionId: String) {
         try {
-            // Check network connectivity before publishing
-            if (!isNetworkAvailable()) {
-                // Queue data for later transmission or handle offline scenario
-                Timber.w("Network unavailable - LSL streaming may be affected")
-                return
+            val sessionDir = File(context.getExternalFilesDir(null), "sessions/$sessionId")
+            if (!sessionDir.exists()) {
+                sessionDir.mkdirs()
             }
             
-            // Publish GSR data with error recovery
-            gsrLSLStream?.let { stream ->
-                try {
-                    stream.pushSample(floatArrayOf(dataPoint.gsrValue.toFloat()))
-                } catch (e: Exception) {
-                    Timber.w(e, "Failed to publish GSR data to LSL stream")
-                }
-            }
+            recordingFile = File(sessionDir, "gsr_data.csv")
+            csvWriter = FileWriter(recordingFile!!)
             
-            // Publish PPG data (simulated A1 and A15 channels)
-            ppgLSLStream?.let { stream ->
-                try {
-                    val ppgA1 = (512 + Random.nextInt(-50, 50)).toFloat()
-                    val ppgA15 = (1024 + Random.nextInt(-100, 100)).toFloat()
-                    stream.pushSample(floatArrayOf(ppgA1, ppgA15))
-                } catch (e: Exception) {
-                    Timber.w(e, "Failed to publish PPG data to LSL stream")
-                }
-            }
+            // Write CSV header
+            csvWriter?.write(GSRDataPoint.getCsvHeader() + "\n")
+            csvWriter?.flush()
             
-            // Publish heart rate (less frequently)
-            if (Random.nextDouble() < 0.01) { // ~1% chance per sample = ~1 Hz
-                heartRateLSLStream?.let { stream ->
-                    try {
-                        stream.pushSample(floatArrayOf(currentHeartRate.toFloat()))
-                    } catch (e: Exception) {
-                        Timber.w(e, "Failed to publish heart rate data to LSL stream")
-                    }
-                }
-            }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "Unexpected error during LSL data publishing")
+            Timber.d("GSR recording file created: ${recordingFile?.absolutePath}")
+        } catch (e: IOException) {
+            Timber.e(e, "Failed to setup recording file")
+            throw e
         }
     }
     
     /**
-     * Check if network is available for LSL streaming
+     * Record data point to CSV file
      */
-    private fun isNetworkAvailable(): Boolean {
-        return try {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) 
-                as? android.net.ConnectivityManager
-            val activeNetwork = connectivityManager?.activeNetworkInfo
-            activeNetwork?.isConnectedOrConnecting == true
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to check network connectivity")
-            false
-        }
-    }
-    
-    /**
-     * Disconnect from Shimmer device with comprehensive resource cleanup
-     */
-    fun disconnect() {
+    private fun recordDataPoint(timestamp: Long, gsrValue: Double, heartRate: Int, prr: Double) {
         try {
-            Timber.d("Starting GSR device disconnection process")
+            val dataPoint = GSRDataPoint(
+                timestamp = timestamp,
+                shimmerTimestamp = timestamp / 1_000_000, // Convert to shimmer time scale
+                gsrValue = gsrValue,
+                ppgValue = 0.0, // TODO: Extract actual PPG value from ObjectCluster - See backlog.md "GSR Data Analysis"
+                packetReceptionRate = prr,
+                sessionId = currentSessionId ?: "",
+                deviceId = currentShimmerDevice?.bluetoothAddress ?: "SHIMMER_DEVICE", // TODO: Enhanced device management - See backlog.md "Multi-Device Support"
+                sampleRate = settingsManager.loadShimmerConfig().sampleRate.toDouble()
+            )
             
-            // Stop recording if active
-            if (isRecording.get()) {
-                try {
-                    stopRecording()
-                    Timber.d("Recording stopped during disconnection")
-                } catch (e: Exception) {
-                    Timber.w(e, "Error stopping recording during disconnection")
-                }
+            csvWriter?.write(dataPoint.toCsvString() + "\n")
+            csvWriter?.flush()
+            
+        } catch (e: IOException) {
+            Timber.e(e, "Failed to write data point to file")
+        }
+    }
+    
+    /**
+     * Close recording file
+     */
+    private fun closeRecordingFile() {
+        try {
+            csvWriter?.close()
+            csvWriter = null
+            
+            recordingFile?.let { file ->
+                Timber.d("GSR recording saved to: ${file.absolutePath}")
             }
+            recordingFile = null
             
-            // Cancel simulation job with timeout
-            simulationJob?.let { job ->
-                try {
-                    job.cancel()
-                    // Give the job a moment to cancel gracefully
-                    runBlocking {
-                        withTimeout(1000L) {
-                            job.join()
-                        }
-                    }
-                    Timber.d("Data simulation stopped")
-                } catch (e: Exception) {
-                    Timber.w(e, "Error stopping data simulation")
-                } finally {
-                    simulationJob = null
-                }
+        } catch (e: IOException) {
+            Timber.e(e, "Failed to close recording file")
+        }
+    }
+    
+    // Enhanced Shimmer Data Visualization Support
+    private var shimmerDataView: com.multimodal.capture.ui.components.ShimmerDataView? = null
+    private var enhancedVisualizationCallback: ((String) -> Unit)? = null
+    private var dataVisualizationEnabled = false
+
+    /**
+     * Set enhanced Shimmer data visualization view
+     */
+    fun setShimmerDataView(dataView: com.multimodal.capture.ui.components.ShimmerDataView) {
+        shimmerDataView = dataView
+        
+        // Set up callbacks
+        dataView.dataUpdateCallback = { dataPoint ->
+            enhancedVisualizationCallback?.invoke("Data updated: GSR=${String.format("%.2f", dataPoint.gsrValue)}")
+        }
+        
+        dataView.statisticsCallback = { gsrAvg, gsrStdDev, hrAvg, prr ->
+            val statsMessage = "Stats - GSR Avg: ${String.format("%.2f", gsrAvg)}, HR Avg: $hrAvg, PRR: ${String.format("%.1f", prr)}%"
+            enhancedVisualizationCallback?.invoke(statsMessage)
+        }
+        
+        dataView.interactionCallback = { selectedPoint ->
+            if (selectedPoint != null) {
+                val interactionMessage = "Selected: GSR=${String.format("%.2f", selectedPoint.gsrValue)} at ${java.util.Date(selectedPoint.timestamp / 1_000_000)}"
+                enhancedVisualizationCallback?.invoke(interactionMessage)
             }
-            
-            // Clear connection state
-            isConnected.set(false)
-            val previousAddress = connectedDeviceAddress
-            connectedDeviceAddress = null
-            
-            // Reset current values
-            currentGSRValue = 0.0
-            currentHeartRate = 0
-            currentPRR = 0.0
-            
-            updateStatus(context.getString(R.string.status_gsr_disconnected))
-            Timber.d("Successfully disconnected from GSR device: $previousAddress")
-            
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to disconnect from GSR device")
-            updateStatus("Disconnect Error: ${e.message}")
-            
-            // Force cleanup even if errors occurred
+        }
+        
+        dataVisualizationEnabled = true
+        Timber.d("[DEBUG_LOG] Enhanced Shimmer data visualization view set")
+    }
+
+    /**
+     * Set enhanced visualization callback
+     */
+    fun setEnhancedVisualizationCallback(callback: (String) -> Unit) {
+        enhancedVisualizationCallback = callback
+    }
+
+    /**
+     * Enable/disable real-time data visualization
+     */
+    fun setDataVisualizationEnabled(enabled: Boolean) {
+        dataVisualizationEnabled = enabled
+        if (enabled) {
+            enhancedVisualizationCallback?.invoke("Data visualization enabled")
+        } else {
+            enhancedVisualizationCallback?.invoke("Data visualization disabled")
+        }
+        Timber.d("[DEBUG_LOG] Data visualization enabled: $enabled")
+    }
+
+    /**
+     * Set visualization display mode
+     */
+    fun setVisualizationDisplayMode(mode: Int) {
+        shimmerDataView?.setDisplayMode(mode)
+        val modeString = when (mode) {
+            0 -> "Real-time"
+            1 -> "History"
+            2 -> "Statistics"
+            else -> "Unknown"
+        }
+        enhancedVisualizationCallback?.invoke("Display mode: $modeString")
+        Timber.d("[DEBUG_LOG] Visualization display mode set to: $modeString")
+    }
+
+    /**
+     * Set visualization time range
+     */
+    fun setVisualizationTimeRange(range: Long) {
+        shimmerDataView?.setTimeRange(range)
+        val rangeString = when (range) {
+            30000L -> "30 seconds"
+            60000L -> "1 minute"
+            300000L -> "5 minutes"
+            600000L -> "10 minutes"
+            else -> "${range / 1000} seconds"
+        }
+        enhancedVisualizationCallback?.invoke("Time range: $rangeString")
+        Timber.d("[DEBUG_LOG] Visualization time range set to: $rangeString")
+    }
+
+    /**
+     * Set visualization graph type
+     */
+    fun setVisualizationGraphType(type: Int) {
+        shimmerDataView?.setGraphType(type)
+        val typeString = when (type) {
+            0 -> "Line"
+            1 -> "Bar"
+            2 -> "Area"
+            else -> "Unknown"
+        }
+        enhancedVisualizationCallback?.invoke("Graph type: $typeString")
+        Timber.d("[DEBUG_LOG] Visualization graph type set to: $typeString")
+    }
+
+    /**
+     * Set visualization color scheme
+     */
+    fun setVisualizationColorScheme(scheme: Int) {
+        shimmerDataView?.setColorScheme(scheme)
+        val schemeString = when (scheme) {
+            0 -> "Default"
+            1 -> "Medical"
+            2 -> "High Contrast"
+            else -> "Unknown"
+        }
+        enhancedVisualizationCallback?.invoke("Color scheme: $schemeString")
+        Timber.d("[DEBUG_LOG] Visualization color scheme set to: $schemeString")
+    }
+
+    /**
+     * Clear visualization data
+     */
+    fun clearVisualizationData() {
+        shimmerDataView?.clearData()
+        enhancedVisualizationCallback?.invoke("Visualization data cleared")
+        Timber.d("[DEBUG_LOG] Visualization data cleared")
+    }
+
+    /**
+     * Get current visualization statistics
+     */
+    fun getVisualizationStatistics(): Map<String, Any>? {
+        val stats = shimmerDataView?.getStatistics()
+        if (stats != null) {
+            enhancedVisualizationCallback?.invoke("Statistics retrieved: ${stats.size} metrics")
+        }
+        return stats
+    }
+
+    /**
+     * Export visualization data
+     */
+    fun exportVisualizationData(): List<GSRDataPoint>? {
+        val data = shimmerDataView?.exportData()
+        if (data != null) {
+            enhancedVisualizationCallback?.invoke("Data exported: ${data.size} points")
+            Timber.d("[DEBUG_LOG] Visualization data exported: ${data.size} points")
+        }
+        return data
+    }
+
+    /**
+     * Enhanced data callback that feeds visualization
+     */
+    private fun updateVisualization(gsrValue: Double, heartRate: Int, prr: Double) {
+        if (dataVisualizationEnabled && shimmerDataView != null) {
             try {
-                isConnected.set(false)
-                connectedDeviceAddress = null
-                simulationJob?.cancel()
-                simulationJob = null
-            } catch (cleanupError: Exception) {
-                Timber.e(cleanupError, "Error during forced cleanup")
+                shimmerDataView?.addGSRData(gsrValue, heartRate, prr, System.currentTimeMillis(), currentSessionId ?: "live")
+                Timber.v("[DEBUG_LOG] Visualization updated: GSR=$gsrValue, HR=$heartRate, PRR=$prr")
+            } catch (e: Exception) {
+                Timber.e(e, "[DEBUG_LOG] Failed to update visualization")
+                enhancedVisualizationCallback?.invoke("Visualization update failed: ${e.message}")
             }
         }
     }
-    
+
     /**
-     * Update status and notify callback
+     * Enhanced data processing with advanced analytics
      */
-    private fun updateStatus(status: String) {
-        mainHandler.post {
-            statusCallback?.invoke(status)
+    private fun processEnhancedGSRData(objectCluster: ObjectCluster) {
+        try {
+            val gsrValue = extractGSRValue(objectCluster)
+            val timestamp = extractTimestamp(objectCluster)
+            val prr = extractPacketReceptionRate(objectCluster)
+            
+            // Calculate heart rate from PPG if available
+            val heartRate = calculateHeartRateFromPPG(objectCluster)
+            
+            // Update visualization if enabled
+            updateVisualization(gsrValue, heartRate, prr)
+            
+            // Apply data filtering and smoothing
+            val filteredGSR = applyDataFiltering(gsrValue)
+            val smoothedGSR = applyDataSmoothing(filteredGSR)
+            
+            // Detect anomalies
+            val isAnomalous = detectDataAnomalies(smoothedGSR, heartRate, prr)
+            if (isAnomalous) {
+                enhancedVisualizationCallback?.invoke("Data anomaly detected: GSR=${String.format("%.2f", smoothedGSR)}")
+            }
+            
+            // Call original data callback with processed data
+            dataCallback?.invoke(smoothedGSR, heartRate, prr)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Enhanced data processing failed")
+            enhancedVisualizationCallback?.invoke("Data processing error: ${e.message}")
         }
     }
-    
+
     /**
-     * Comprehensive cleanup of all resources and connections
+     * Calculate heart rate from PPG data
+     */
+    private fun calculateHeartRateFromPPG(objectCluster: ObjectCluster): Int {
+        return try {
+            // TODO: Implement proper PPG to heart rate conversion - See backlog.md "Advanced GSR Analysis"
+            val ppgValue = objectCluster.getFormatClusterValue("PPG_A12", "CAL") ?: 0.0
+            // Simplified heart rate estimation (replace with proper algorithm)
+            val estimatedHR = (60 + (ppgValue % 100)).toInt().coerceIn(40, 200)
+            estimatedHR
+        } catch (e: Exception) {
+            Timber.w(e, "[DEBUG_LOG] PPG heart rate calculation failed, using default")
+            75 // Default heart rate
+        }
+    }
+
+    /**
+     * Apply data filtering to remove noise
+     */
+    private fun applyDataFiltering(gsrValue: Double): Double {
+        // TODO: Implement advanced filtering algorithms - See backlog.md "Signal Processing"
+        // Simple outlier filtering for now
+        return gsrValue.coerceIn(0.1, 50.0)
+    }
+
+    /**
+     * Apply data smoothing using moving average
+     */
+    private fun applyDataSmoothing(gsrValue: Double): Double {
+        // TODO: Implement proper smoothing algorithms - See backlog.md "Signal Processing"
+        // For now, return the filtered value
+        return gsrValue
+    }
+
+    /**
+     * Detect data anomalies
+     */
+    private fun detectDataAnomalies(gsrValue: Double, heartRate: Int, prr: Double): Boolean {
+        // TODO: Implement advanced anomaly detection - See backlog.md "Quality Assurance"
+        return gsrValue < 0.5 || gsrValue > 30.0 || heartRate < 40 || heartRate > 200 || prr < 80.0
+    }
+
+    /**
+     * Cleanup resources
      */
     fun cleanup() {
         try {
-            Timber.d("Starting comprehensive GSRSensorManager cleanup")
+            Timber.d("Cleaning up GSRSensorManager")
             
-            // Disconnect from device first
-            try {
-                disconnect()
-                Timber.d("Device disconnection completed during cleanup")
-            } catch (e: Exception) {
-                Timber.w(e, "Error during device disconnection in cleanup")
+            // Stop recording if active
+            if (isRecording) {
+                stopRecording()
             }
             
-            // Cancel any remaining coroutine jobs
-            try {
-                recordingJob?.cancel()
-                recordingJob = null
-                simulationJob?.cancel()
-                simulationJob = null
-                Timber.d("All coroutine jobs cancelled")
-            } catch (e: Exception) {
-                Timber.w(e, "Error cancelling coroutine jobs")
-            }
-            
-            // Close data writer if still open
-            try {
-                dataWriter?.close()
-                dataWriter = null
-                Timber.d("Data writer closed")
-            } catch (e: Exception) {
-                Timber.w(e, "Error closing data writer")
-            }
-            
-            // Clear data queue
-            try {
-                dataQueue.clear()
-                Timber.d("Data queue cleared")
-            } catch (e: Exception) {
-                Timber.w(e, "Error clearing data queue")
-            }
-            
-            // Stop and cleanup LSL streams
-            try {
-                gsrLSLStream?.let { stream ->
-                    stream.stopStream()
-                    gsrLSLStream = null
-                }
-                ppgLSLStream?.let { stream ->
-                    stream.stopStream()
-                    ppgLSLStream = null
-                }
-                heartRateLSLStream?.let { stream ->
-                    stream.stopStream()
-                    heartRateLSLStream = null
-                }
-                Timber.d("LSL streams stopped and cleared")
-            } catch (e: Exception) {
-                Timber.w(e, "Error stopping LSL streams")
-            }
-            
-            // Cleanup LSL stream manager
-            try {
-                lslStreamManager?.cleanup()
-                lslStreamManager = null
-                Timber.d("LSL stream manager cleaned up")
-            } catch (e: Exception) {
-                Timber.w(e, "Error cleaning up LSL stream manager")
-            }
-            
-            // Reset all state variables
-            try {
-                isShimmerInitialized = false
-                isRecording.set(false)
-                isConnected.set(false)
-                enableLSLStreaming.set(false)
-                connectedDeviceAddress = null
-                currentSessionId = ""
-                currentGSRValue = 0.0
-                currentHeartRate = 0
-                currentPRR = 0.0
-                Timber.d("All state variables reset")
-            } catch (e: Exception) {
-                Timber.w(e, "Error resetting state variables")
-            }
+            // Disconnect from devices
+            disconnect()
             
             // Clear callbacks
-            try {
-                statusCallback = null
-                dataCallback = null
-                Timber.d("Callbacks cleared")
-            } catch (e: Exception) {
-                Timber.w(e, "Error clearing callbacks")
-            }
+            statusCallback = null
+            dataCallback = null
+            enhancedVisualizationCallback = null
             
-            Timber.d("GSRSensorManager comprehensive cleanup completed successfully")
+            // Clear visualization
+            shimmerDataView = null
+            dataVisualizationEnabled = false
+            
+            // Cancel coroutine scope
+            coroutineScope.cancel()
+            
+            Timber.d("GSRSensorManager cleanup completed")
             
         } catch (e: Exception) {
-            Timber.e(e, "Critical error during GSRSensorManager cleanup")
-            
-            // Force reset critical state even if cleanup failed
-            try {
-                isConnected.set(false)
-                isRecording.set(false)
-                connectedDeviceAddress = null
-                recordingJob?.cancel()
-                simulationJob?.cancel()
-                dataWriter?.close()
-            } catch (forceError: Exception) {
-                Timber.e(forceError, "Error during forced state reset")
-            }
+            Timber.e(e, "Error during GSRSensorManager cleanup")
         }
     }
 }

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/splash_background"
+    tools:context=".ui.SplashPreviewActivity">
+
+    <!-- Top toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/splash_background"
+        android:elevation="4dp"
+        app:title="Splash Screen Preview"
+        app:titleTextColor="@color/splash_text_primary"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationIconTint="@color/splash_text_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Preview container that mimics the actual splash screen -->
+    <FrameLayout
+        android:id="@+id/fl_preview_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/preview_border"
+        android:elevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@id/ll_controls"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Include the actual splash screen layout -->
+        <include
+            android:id="@+id/include_splash"
+            layout="@layout/activity_splash"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Preview overlay -->
+        <View
+            android:id="@+id/view_preview_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/overlay_background"
+            android:visibility="gone" />
+
+        <!-- Preview label -->
+        <TextView
+            android:id="@+id/tv_preview_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/preview_label_background"
+            android:padding="8dp"
+            android:text="PREVIEW"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
+
+    </FrameLayout>
+
+    <!-- Control buttons -->
+    <LinearLayout
+        android:id="@+id/ll_controls"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Refresh preview button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_refresh_preview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Refresh"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/splash_accent"
+            app:icon="@android:drawable/ic_popup_sync"
+            app:iconTint="@color/white"
+            style="@style/Widget.Material3.Button" />
+
+        <!-- Toggle overlay button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_toggle_overlay"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Toggle Overlay"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/status_warning"
+            app:icon="@android:drawable/ic_menu_view"
+            app:iconTint="@color/white"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    </LinearLayout>
+
+    <!-- Information card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cv_info"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/splash_text_primary"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Splash Screen Information"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/splash_background"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tv_splash_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="This preview shows how the splash screen appears when the app launches. The splash screen displays for 2.5 seconds in release builds and 1.5 seconds in debug builds."
+                android:textSize="14sp"
+                android:textColor="@color/splash_background"
+                android:lineSpacingExtra="2dp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

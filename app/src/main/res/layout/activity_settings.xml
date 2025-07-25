@@ -27,16 +27,41 @@
         android:layout_marginBottom="80dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_show_json"
+    <!-- Bottom buttons container -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:layout_gravity="bottom"
-        android:text="Show Settings JSON"
-        android:textAllCaps="false"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        app:icon="@android:drawable/ic_menu_info_details"
-        app:iconGravity="start" />
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Preview Splash Screen button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_preview_splash"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Preview Splash Screen"
+            android:textAllCaps="false"
+            style="@style/Widget.Material3.Button"
+            app:icon="@android:drawable/ic_menu_view"
+            app:iconGravity="start" />
+
+        <!-- Show Settings JSON button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_show_json"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Show Settings JSON"
+            android:textAllCaps="false"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            app:icon="@android:drawable/ic_menu_info_details"
+            app:iconGravity="start" />
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

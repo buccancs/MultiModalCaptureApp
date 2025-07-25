@@ -10,9 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }  // Add this line for LSL dependency
+        maven { url = 'https://jitpack.io' }  // Add this line for LSL dependency
         flatDir {
-            dirs 'app/src/main/libs'
+            dirs 'app/src/main/libs', 'app/libs'
         }
     }
 }

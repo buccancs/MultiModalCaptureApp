@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary_background">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/title_device_management"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/device_management"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Device Status Container - Has Devices -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_has_device"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_device_management"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible">
+
+        <!-- Device List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_device_list"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/btn_scan_devices"
+            tools:listitem="@layout/item_device" />
+
+        <!-- Scan Devices Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_scan_devices"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/bluetooth_scan"
+            android:textColor="@color/text_primary"
+            app:backgroundTint="@color/accent_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Device Status Container - No Devices -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_no_device"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_device_management"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- No Devices Icon -->
+        <ImageView
+            android:id="@+id/icon_no_devices"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_devices"
+            android:contentDescription="@string/devices"
+            app:tint="@color/text_secondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/text_no_devices"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <!-- Loading Animation (for device scanning) -->
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/loading_animation"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:visibility="gone"
+            app:lottie_rawRes="@raw/loading_connection"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/text_no_devices"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <!-- No Devices Text -->
+        <TextView
+            android:id="@+id/text_no_devices"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="No devices connected"
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/icon_no_devices"
+            app:layout_constraintBottom_toTopOf="@id/text_no_devices_subtitle" />
+
+        <!-- No Devices Subtitle -->
+        <TextView
+            android:id="@+id/text_no_devices_subtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:text="Connect your thermal camera, GSR sensors, or other devices to get started"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_no_devices"
+            app:layout_constraintBottom_toTopOf="@id/btn_connect_device" />
+
+        <!-- Connect Device Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_connect_device"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:text="Connect Device"
+            android:textColor="@color/text_primary"
+            app:backgroundTint="@color/accent_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_no_devices_subtitle"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Theme Color Palette -->
+    
+    <!-- Primary Colors -->
+    <color name="primary_background">#16131e</color>
+    <color name="secondary_background">#2d3748</color>
+    <color name="tertiary_background">#4a5568</color>
+    
+    <!-- Accent Colors -->
+    <color name="accent_primary">#3182ce</color>
+    <color name="accent_secondary">#2c5282</color>
+    
+    <!-- Status Colors -->
+    <color name="success_color">#38a169</color>
+    <color name="success_light">#48bb78</color>
+    <color name="warning_color">#ed8936</color>
+    <color name="warning_light">#f6ad55</color>
+    <color name="error_color">#e53e3e</color>
+    <color name="error_light">#fc8181</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#ffffff</color>
+    <color name="text_secondary">#a0aec0</color>
+    <color name="text_tertiary">#718096</color>
+    <color name="text_disabled">#4a5568</color>
+    
+    <!-- Surface Colors -->
+    <color name="surface_primary">#2d3748</color>
+    <color name="surface_secondary">#4a5568</color>
+    <color name="surface_elevated">#1a202c</color>
+    
+    <!-- Border Colors -->
+    <color name="border_primary">#4a5568</color>
+    <color name="border_secondary">#2d3748</color>
+    <color name="border_accent">#3182ce</color>
+    
+    <!-- Recording Colors -->
+    <color name="recording_active">#e53e3e</color>
+    <color name="recording_inactive">#718096</color>
+    
+    <!-- Device Status Colors -->
+    <color name="device_connected">#38a169</color>
+    <color name="device_disconnected">#e53e3e</color>
+    <color name="device_connecting">#ed8936</color>
+    
+    <!-- Battery Level Colors -->
+    <color name="battery_high">#38a169</color>
+    <color name="battery_medium">#ed8936</color>
+    <color name="battery_low">#e53e3e</color>
+    <color name="battery_critical">#c53030</color>
+</resources>

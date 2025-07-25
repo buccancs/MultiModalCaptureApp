@@ -3,516 +3,163 @@ package com.multimodal.capture.capture
 import android.content.Context
 import android.graphics.Bitmap
 import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
+import com.multimodal.capture.capture.thermal.ThermalDataRecorder
 import android.os.Handler
 import android.os.Looper
 import android.widget.ImageView
-import com.multimodal.capture.R
 import com.multimodal.capture.utils.TimestampManager
 import com.multimodal.capture.network.NetworkManager
+import com.multimodal.capture.network.CommandProtocol
+import com.multimodal.capture.thermal.USBMonitorManager
+import com.multimodal.capture.thermal.ThermalDataParser
+import com.multimodal.capture.thermal.OnUSBConnectListener
+import com.multimodal.capture.thermal.Const
+import com.multimodal.capture.ui.components.ThermalPreviewView
+import com.energy.iruvc.ircmd.IRCMD
+import com.energy.iruvc.usb.USBMonitor
+import com.energy.iruvc.utils.CommonParams
+import com.energy.iruvc.utils.IFrameCallback
+import com.energy.iruvc.uvc.UVCCamera
 import timber.log.Timber
 import java.io.File
-import java.io.FileOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
 
 /**
  * ThermalCameraManager handles integration with Topdon TC001 thermal camera via USB-C.
- * Captures infrared video frames at ~25-30 Hz as specified in requirements.
- *
- * Based on comprehensive analysis of TOPDON_EXAMPLE_SDK_USB_IR_1.3.7 sample application:
- * - Uses USBMonitor for device connection management (IRUVC.java lines 132-214)
- * - Implements UVCCamera for video capture (lines 414-426)
- * - Uses IRCMD for thermal camera commands (lines 441-458)
- * - Processes YUV422 to ARGB conversion using LibIRParse (ImageThread.java)
- * - Supports temperature calibration workflow based on iOS documentation
- * - Frame processing pipeline with rotation and pseudocolor support
+ * Simplified implementation using USBMonitorManager from IRCamera project.
  */
 class ThermalCameraManager(
     private val context: Context,
-    private val networkManager: NetworkManager? = null
-) {
+    private val networkManager: com.multimodal.capture.network.NetworkManager? = null
+) : OnUSBConnectListener {
 
     private val timestampManager = TimestampManager()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val dataRecorder = ThermalDataRecorder()
 
-    // USB components
-    private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-    private var usbDevice: UsbDevice? = null
-
-    // Topdon SDK components (based on sample app analysis)
-    private var usbMonitor: com.infisense.iruvc.usb.USBMonitor? = null
-    private var uvcCamera: com.infisense.iruvc.uvc.UVCCamera? = null
-    private var ircmd: com.infisense.iruvc.ircmd.IRCMD? = null
+    // USB Monitor Manager from IRCamera
+    private val usbMonitorManager = USBMonitorManager.getInstance()
+    
+    // IRCMD for thermal camera commands
+    private var ircmd: IRCMD? = null
 
     // Recording state
-    private val isRecording = AtomicBoolean(false)
     private val isConnected = AtomicBoolean(false)
-    private var isCalibrated = AtomicBoolean(false)
     private var currentSessionId: String = ""
-
-    // Thermal capture parameters
-    private val targetFrameRate = 30.0 // Hz
-    private val thermalResolution = Pair(256, 192) // Standard thermal camera resolution
-    private val imageOrTempDataLength = 256 * 192 * 2 // YUV422 data length
+    
+    // Connection status for UI indicators
+    enum class ConnectionStatus {
+        DISCONNECTED,    // Red - device not connected
+        INITIALIZING,    // Yellow - connecting/initializing
+        CONNECTED        // Green - connected and communicating
+    }
+    
+    private var connectionStatus = ConnectionStatus.DISCONNECTED
 
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
+    private var connectionStatusCallback: ((ConnectionStatus, String) -> Unit)? = null
     private var thermalFrameCallback: ((ByteArray, Long) -> Unit)? = null
     private var previewImageView: ImageView? = null
+    private var thermalPreviewView: ThermalPreviewView? = null
+    private var temperatureCallback: ((max: Float, min: Float, center: Float) -> Unit)? = null
 
     // Capture job and output
     private var captureJob: Job? = null
-    private var outputStream: FileOutputStream? = null
 
     init {
-        Timber.d("ThermalCameraManager initialized with Topdon SDK integration")
-        checkForThermalCamera()
+        Timber.d("[DEBUG_LOG] ThermalCameraManager initialized")
+        updateConnectionStatus(ConnectionStatus.DISCONNECTED, "Thermal camera disconnected")
     }
 
     /**
-     * Check for connected thermal camera devices
+     * Initialize thermal camera system
      */
-    private fun checkForThermalCamera() {
-        try {
-            val deviceList = usbManager.deviceList
-
-            for ((_, device) in deviceList) {
-                if (isThermalCamera(device)) {
-                    usbDevice = device
-                    updateStatus("Thermal camera detected")
-                    Timber.d("Thermal camera found: ${device.deviceName}")
-                    return
-                }
-            }
-
-            updateStatus(context.getString(R.string.status_thermal_disconnected))
-            Timber.d("No thermal camera detected")
-
+    fun initialize(): Boolean {
+        return try {
+            Timber.d("[DEBUG_LOG] Initializing thermal camera system...")
+            
+            // Add this manager as USB connect listener
+            usbMonitorManager.addOnUSBConnectListener(this)
+            
+            // Initialize USB monitor with TC001 PID
+            usbMonitorManager.init(
+                context,
+                Const.PID, // 0x5840 for TC001
+                true, // Use IRISP
+                CommonParams.DataFlowMode.IMAGE_AND_TEMP_OUTPUT
+            )
+            
+            // Register to start listening for USB events
+            usbMonitorManager.registerUSB()
+            
+            updateStatus("Thermal camera system initialized")
+            Timber.d("[DEBUG_LOG] Thermal camera system initialized successfully")
+            true
         } catch (e: Exception) {
-            Timber.e(e, "Error checking for thermal camera")
-            updateStatus("Thermal Error: ${e.message}")
+            Timber.e(e, "[DEBUG_LOG] Failed to initialize thermal camera: ${e.message}")
+            updateStatus("Failed to initialize thermal camera: ${e.message}")
+            false
         }
     }
 
     /**
-     * Check if USB device is a thermal camera using actual vendor/product IDs
-     */
-    private fun isThermalCamera(device: UsbDevice): Boolean {
-        val vendorId = device.vendorId
-        val productId = device.productId
-
-        // Topdon thermal camera vendor/product IDs from device filter
-        return when (vendorId) {
-            0x1f3a -> productId in listOf(0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007, 0x1008, 0x1009, 0x100a, 0x100b, 0x100c, 0x100d, 0x100e, 0x100f, 0x1010, 0x1011, 0x1012, 0x1013, 0x1014, 0x1015, 0x1016, 0x1017, 0x1018, 0x1019, 0x101a, 0x101b, 0x101c, 0x101d, 0x101e, 0x101f, 0x1020, 0x1021, 0x1022, 0x1023, 0x1024, 0x1025, 0x1026, 0x1027, 0x1028, 0x1029, 0x102a, 0x102b, 0x102c, 0x102d, 0x102e, 0x102f, 0x1030, 0x1031, 0x1032, 0x1033, 0x1034, 0x1035, 0x1036, 0x1037, 0x1038, 0x1039, 0x103a, 0x103b, 0x103c, 0x103d, 0x103e, 0x103f, 0x1040, 0x1041, 0x1042, 0x1043, 0x1044, 0x1045, 0x1046, 0x1047, 0x1048, 0x1049, 0x104a, 0x104b, 0x104c, 0x104d, 0x104e, 0x104f, 0x1050, 0x1051, 0x1052, 0x1053, 0x1054, 0x1055, 0x1056, 0x1057, 0x1058, 0x1059, 0x105a, 0x105b, 0x105c, 0x105d, 0x105e, 0x105f, 0x1060, 0x1061, 0x1062, 0x1063, 0x1064)
-            0x3538 -> productId in listOf(0x0902)
-            else -> false
-        }
-    }
-
-    /**
-     * Connect to thermal camera using Topdon SDK
+     * Connect to thermal camera (backward compatibility method)
      */
     fun connectToThermalCamera(): Boolean {
-        val device = usbDevice ?: return false
+        return initialize()
+    }
 
-        try {
-            if (!usbManager.hasPermission(device)) {
-                Timber.w("No permission for USB device")
-                updateStatus("USB permission required")
-                return false
-            }
-
-            // Initialize Topdon SDK components based on sample app
-            initializeThermalCamera()
-
-            isConnected.set(true)
-            updateStatus(context.getString(R.string.status_thermal_connected))
-            Timber.d("Connected to thermal camera")
-            return true
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to connect to thermal camera")
-            updateStatus("Connection Error: ${e.message}")
+    /**
+     * Start recording thermal data
+     */
+    fun startRecording(sessionId: String, outputDirectory: File): Boolean {
+        if (dataRecorder.isRecording) {
+            Timber.w("[DEBUG_LOG] Recording already in progress")
             return false
         }
-    }
 
-    /**
-     * Initialize thermal camera using Topdon SDK based on sample application
-     * Following the initialization sequence from IRUVC.java
-     */
-    private fun initializeThermalCamera() {
-        try {
-            // Step 1: Initialize UVC Camera (from IRUVC.java lines 414-426)
-            val concreateUVCBuilder = com.infisense.iruvc.uvc.ConcreateUVCBuilder()
-            uvcCamera = concreateUVCBuilder
-                .setUVCType(com.infisense.iruvc.uvc.UVCType.USB_UVC)
-                .build()
-            
-            // Adjust bandwidth for stability (from sample app)
-            uvcCamera?.setDefaultBandwidth(1F)
-
-            // Step 2: Initialize USB Monitor (from IRUVC.java lines 132-214)
-            usbMonitor = com.infisense.iruvc.usb.USBMonitor(context, usbDeviceListener)
-            usbMonitor?.register()
-
-            Timber.d("Topdon SDK initialized successfully - UVCCamera and USBMonitor ready")
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize Topdon SDK")
-            throw e
-        }
-    }
-
-    /**
-     * USB device listener based on sample application
-     */
-    private val usbDeviceListener = object : com.infisense.iruvc.usb.USBMonitor.OnDeviceConnectListener {
-        override fun onAttach(device: UsbDevice) {
-            if (isThermalCamera(device)) {
-                usbMonitor?.requestPermission(device)
-                updateStatus("Thermal camera detected")
-            }
-        }
-
-        override fun onGranted(p0: UsbDevice?, p1: Boolean) {
-            if (p1) {
-                Timber.d("USB permission granted for thermal camera")
-            } else {
-                updateStatus("USB permission denied")
-            }
-        }
-
-        override fun onConnect(device: UsbDevice, ctrlBlock: com.infisense.iruvc.usb.USBMonitor.UsbControlBlock, createNew: Boolean) {
-            if (createNew) {
-                openUVCCamera(ctrlBlock)
-                initIRCMD()
-                startThermalPreview()
-            }
-        }
-
-        override fun onDisconnect(device: UsbDevice, ctrlBlock: com.infisense.iruvc.usb.USBMonitor.UsbControlBlock) {
-            stopThermalPreview()
-            updateStatus("Thermal camera disconnected")
-        }
-
-        override fun onDettach(device: UsbDevice) {
-            if (isConnected.get()) {
-                stopThermalPreview()
-            }
-        }
-
-        override fun onCancel(device: UsbDevice) {
-            updateStatus("USB permission denied")
-        }
-    }
-
-    /**
-     * Open UVC Camera (from IRUVC.java lines 492-509)
-     */
-    private fun openUVCCamera(ctrlBlock: com.infisense.iruvc.usb.USBMonitor.UsbControlBlock) {
-        try {
-            uvcCamera?.openUVCCamera(ctrlBlock)
-            Timber.d("UVC Camera opened successfully")
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to open UVC Camera")
-        }
-    }
-
-    /**
-     * Initialize IRCMD (from IRUVC.java lines 441-458)
-     * Sets up thermal camera command interface for P2/TC001 devices
-     */
-    private fun initIRCMD() {
-        try {
-            val concreteIRCMDBuilder = com.infisense.iruvc.ircmd.ConcreteIRCMDBuilder()
-            ircmd = concreteIRCMDBuilder
-                .setIrcmdType(com.infisense.iruvc.ircmd.IRCMDType.USB_IR_256_384)
-                .setIdCamera(uvcCamera?.getNativePtr() ?: 0)
-                .setCreateResultCallback { resultCode ->
-                    if (resultCode == com.infisense.iruvc.ircmd.ResultCode.SUCCESS) {
-                        Timber.d("IRCMD initialized successfully for thermal camera")
-                        isConnected.set(true)
-                        
-                        // Start temperature calibration sequence after successful IRCMD init
-                        startTemperatureCalibration()
-                    } else {
-                        Timber.e("IRCMD initialization failed: $resultCode")
-                        updateStatus("Thermal camera initialization failed")
-                    }
-                }
-                .build()
-
-            if (ircmd == null) {
-                Timber.e("IRCMD builder returned null - initialization failed")
-                updateStatus("Thermal camera setup failed")
-            }
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to initialize IRCMD")
-            updateStatus("IRCMD Error: ${e.message}")
-        }
-    }
-
-    /**
-     * Start thermal preview (from IRUVC.java lines 543-594)
-     */
-    private fun startThermalPreview() {
-        try {
-            uvcCamera?.setOpenStatus(true)
-            uvcCamera?.setFrameCallback(frameCallback)
-            uvcCamera?.onStartPreview()
-
-            Timber.d("Thermal preview started")
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to start thermal preview")
-        }
-    }
-
-    /**
-     * Stop thermal preview
-     */
-    private fun stopThermalPreview() {
-        try {
-            uvcCamera?.setOpenStatus(false)
-            uvcCamera?.onStopPreview()
-
-            Timber.d("Thermal preview stopped")
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to stop thermal preview")
-        }
-    }
-
-    /**
-     * Frame callback for processing thermal data (based on ImageThread.java)
-     */
-    private val frameCallback = object : com.infisense.iruvc.utils.IFrameCallback {
-        override fun onFrame(frame: ByteArray) {
-            if (isRecording.get()) {
-                processIncomingFrame(frame)
-            }
-        }
-    }
-
-    /**
-     * Process incoming thermal frame (based on ImageThread.java lines 118-177)
-     */
-    private fun processIncomingFrame(frame: ByteArray) {
-        try {
-            // Convert YUV422 to ARGB using LibIRParse
-            val imageARGB = ByteArray(thermalResolution.first * thermalResolution.second * 4)
-
-            com.infisense.iruvc.sdkisp.LibIRParse.converyArrayYuv422ToARGB(
-                frame,
-                thermalResolution.second * thermalResolution.first,
-                imageARGB
-            )
-
-            // Apply rotation if needed (from ImageThread.java lines 224-232)
-            val finalFrame = if (needsRotation()) {
-                val imageDst = ByteArray(imageARGB.size)
-                val imageRes = com.infisense.iruvc.sdkisp.LibIRProcess.ImageRes_t().apply {
-                    height = thermalResolution.first.toChar()
-                    width = thermalResolution.second.toChar()
-                }
-
-                com.infisense.iruvc.sdkisp.LibIRProcess.rotateRight90(
-                    imageARGB,
-                    imageRes,
-                    com.infisense.iruvc.utils.CommonParams.IRPROCSRCFMTType.IRPROC_SRC_FMT_ARGB8888,
-                    imageDst
-                )
-                imageDst
-            } else {
-                imageARGB
-            }
-
-            // Write to output stream
-            outputStream?.write(finalFrame)
-
-            // Notify frame callback
-            thermalFrameCallback?.invoke(finalFrame, timestampManager.getCurrentTimestamp())
-
-            // Update preview ImageView if available
-            previewImageView?.let { imageView ->
-                updatePreviewImageView(finalFrame)
-            }
-
-            // TODO: Option to save YUV image/video or ARGB
-            // This would allow saving both raw YUV422 data and processed ARGB frames
-            // saveFrameData(originalYUV = frame, processedARGB = finalFrame)
-            // - YUV422: Raw thermal data for post-processing
-            // - ARGB: Processed visual frames for immediate display
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to process thermal frame")
-        }
-    }
-
-    /**
-     * Check if rotation is needed (placeholder)
-     */
-    private fun needsRotation(): Boolean {
-        // Based on device orientation or configuration
-        return false
-    }
-
-    /**
-     * Start temperature calibration (based on iOS documentation)
-     * 
-     * From iOS Development Notice: "Please start the shutter in the following rhythm:
-     * A countdown of 20 seconds: start the shutter at the countdown to 19s; start it again 
-     * at the countdown to 16s; start it again at the countdown to 13s; start it again at 
-     * the countdown to 8s; start it again at the countdown to 5s."
-     */
-    private fun startTemperatureCalibration() {
-        updateStatus("Starting temperature calibration (20s sequence)")
-        Timber.d("Starting Topdon temperature calibration sequence")
-        
-        // Calibration timing based on iOS documentation
-        // Countdown from 20s: trigger shutter at 19s, 16s, 13s, 8s, 5s
-        val calibrationSequence = listOf(1000, 4000, 7000, 12000, 15000) // milliseconds
-        var calibrationStep = 0
-
-        val calibrationHandler = Handler(Looper.getMainLooper())
-
-        calibrationSequence.forEach { delay ->
-            calibrationHandler.postDelayed({
-                performShutterCalibration(calibrationStep++)
-            }, delay.toLong())
-        }
-        
-        // Final completion check after 20 seconds
-        calibrationHandler.postDelayed({
-            isCalibrated.set(true)
-            updateStatus("Temperature calibration complete")
-            Timber.d("Topdon temperature calibration sequence completed")
-        }, 20000L)
-    }
-
-    /**
-     * Perform shutter calibration step
-     */
-    private fun performShutterCalibration(step: Int) {
-        try {
-            // Trigger shutter calibration using IRCMD
-            ircmd?.let { cmd ->
-                // Based on sample app, use appropriate calibration method
-                // val result = cmd.startShutter() // This method needs to be identified from SDK
-
-                updateStatus("Calibration step ${step + 1}/5")
-                Timber.d("Temperature calibration step $step completed")
-
-                if (step == 4) {
-                    updateStatus("Temperature calibration complete")
-                    isCalibrated.set(true)
-                }
-            }
-
-        } catch (e: Exception) {
-            Timber.e(e, "Calibration step $step failed")
-        }
-    }
-
-    /**
-     * Process temperature data
-     * TODO: Implement actual temperature processing using correct SDK methods
-     */
-    private fun processTemperatureData(rawFrame: ByteArray): ThermalFrame {
-        return try {
-            // Placeholder implementation - actual SDK methods need to be determined
-            val libIRTemp = com.infisense.iruvc.sdkisp.LibIRTemp()
-            
-            // TODO: Replace with actual SDK temperature conversion methods
-            // The convertToTemperature method doesn't exist in the actual SDK
-            // Need to identify correct methods from SDK documentation
-            val temperatureData = DoubleArray(thermalResolution.first * thermalResolution.second) { 25.0 }
-
-            ThermalFrame(
-                timestamp = timestampManager.getCurrentTimestamp(),
-                temperatureData = temperatureData,
-                minTemp = temperatureData.minOrNull() ?: 0.0,
-                maxTemp = temperatureData.maxOrNull() ?: 0.0,
-                avgTemp = temperatureData.average(),
-                isCalibrated = isCalibrated.get()
-            )
-
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to process temperature data")
-            ThermalFrame.createErrorFrame()
-        }
-    }
-
-    /**
-     * Start thermal video recording
-     */
-    fun startRecording(sessionId: String, startTimestamp: Long) {
         if (!isConnected.get()) {
-            Timber.w("Cannot start recording - thermal camera not connected")
-            return
+            Timber.w("[DEBUG_LOG] Cannot start recording - thermal camera not connected")
+            updateStatus("Thermal camera not connected")
+            return false
         }
 
-        if (isRecording.get()) {
-            Timber.w("Thermal recording already in progress")
-            return
-        }
-
-        try {
+        return try {
             currentSessionId = sessionId
-            timestampManager.setSessionStartTime(startTimestamp)
-
-            // Create output file
-            val outputDir = File(context.getExternalFilesDir(null), "recordings")
-            outputDir.mkdirs()
-
-            val outputFile = File(outputDir, "${sessionId}_thermal_video.raw")
-            outputStream = FileOutputStream(outputFile)
-
-            // Start calibration if not already calibrated
-            if (!isCalibrated.get()) {
-                startTemperatureCalibration()
-            }
-
-            isRecording.set(true)
-            updateStatus("Recording thermal video...")
-
-            Timber.d("Thermal recording started: ${outputFile.absolutePath}")
-
+            
+            // Create thermal data output file
+            val thermalFile = File(outputDirectory, "thermal_data.bin")
+            if (!dataRecorder.start(thermalFile)) return false
+            updateStatus("Recording thermal data...")
+            
+            Timber.d("[DEBUG_LOG] Started thermal recording to: ${thermalFile.absolutePath}")
+            true
         } catch (e: Exception) {
-            Timber.e(e, "Failed to start thermal recording")
-            updateStatus("Recording Error: ${e.message}")
+            Timber.e(e, "[DEBUG_LOG] Failed to start thermal recording: ${e.message}")
+            updateStatus("Failed to start thermal recording")
+            false
         }
     }
 
     /**
-     * Stop thermal video recording
+     * Stop recording thermal data
      */
-    fun stopRecording() {
-        if (!isRecording.get()) {
-            Timber.w("No thermal recording in progress")
-            return
+    fun stopRecording(): Boolean {
+        if (!dataRecorder.isRecording) {
+            Timber.w("[DEBUG_LOG] No recording in progress")
+            return false
         }
 
-        try {
-            isRecording.set(false)
-
-            // Close output stream
-            outputStream?.close()
-            outputStream = null
-
-            updateStatus(if (isConnected.get()) {
-                context.getString(R.string.status_thermal_connected)
-            } else {
-                context.getString(R.string.status_thermal_disconnected)
-            })
-
-            Timber.d("Thermal recording stopped")
-
+        return try {
+            dataRecorder.stop()
+            updateStatus("Thermal recording stopped")
+            Timber.d("[DEBUG_LOG] Thermal recording stopped successfully")
+            true
         } catch (e: Exception) {
-            Timber.e(e, "Error stopping thermal recording")
+            Timber.e(e, "[DEBUG_LOG] Failed to stop thermal recording: ${e.message}")
+            false
         }
     }
 
@@ -524,147 +171,550 @@ class ThermalCameraManager(
     }
 
     /**
-     * Set frame callback
+     * Set connection status callback with color indicators
      */
-    fun setFrameCallback(callback: (ByteArray, Long) -> Unit) {
+    fun setConnectionStatusCallback(callback: (ConnectionStatus, String) -> Unit) {
+        connectionStatusCallback = callback
+    }
+
+    /**
+     * Set thermal frame callback
+     */
+    fun setThermalFrameCallback(callback: (ByteArray, Long) -> Unit) {
         thermalFrameCallback = callback
     }
 
     /**
-     * Set preview ImageView for thermal display
+     * Set preview image view (legacy support)
      */
-    fun setPreviewImageView(imageView: ImageView?) {
+    fun setPreviewImageView(imageView: ImageView) {
         previewImageView = imageView
     }
 
     /**
-     * Update preview ImageView with thermal frame
+     * Set enhanced thermal preview view
      */
-    private fun updatePreviewImageView(argbFrame: ByteArray) {
-        try {
-            // Convert ARGB byte array to Bitmap
-            val width = thermalResolution.second
-            val height = thermalResolution.first
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    fun setThermalPreviewView(previewView: ThermalPreviewView) {
+        thermalPreviewView = previewView
+        
+        // Set up temperature listener
+        previewView.temperatureListener = { max, min, center ->
+            temperatureCallback?.invoke(max, min, center)
             
-            // Copy ARGB data to bitmap
-            val intArray = IntArray(argbFrame.size / 4)
-            for (i in intArray.indices) {
-                val baseIndex = i * 4
-                val a = (argbFrame[baseIndex + 3].toInt() and 0xFF) shl 24
-                val r = (argbFrame[baseIndex + 2].toInt() and 0xFF) shl 16
-                val g = (argbFrame[baseIndex + 1].toInt() and 0xFF) shl 8
-                val b = (argbFrame[baseIndex].toInt() and 0xFF)
-                intArray[i] = a or r or g or b
+            // Send real-time thermal data to PC if network streaming is enabled
+            networkManager?.let { network ->
+                if (network.isDataStreamingActive()) {
+                    val dataPacket = CommandProtocol.createThermalDataPacket(
+                        maxTemp = max,
+                        minTemp = min,
+                        centerTemp = center,
+                        sessionId = currentSessionId
+                    )
+                    network.sendDataPacket(dataPacket)
+                }
             }
-            bitmap.setPixels(intArray, 0, width, 0, 0, width, height)
-            
-            // Update ImageView on main thread
-            mainHandler.post {
-                previewImageView?.setImageBitmap(bitmap)
-            }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to update thermal preview")
         }
+        
+        Timber.d("[DEBUG_LOG] Enhanced thermal preview view set")
     }
 
     /**
-     * Get connection status
+     * Set temperature measurement callback
+     */
+    fun setTemperatureCallback(callback: (max: Float, min: Float, center: Float) -> Unit) {
+        temperatureCallback = callback
+    }
+
+    /**
+     * Set pseudocolor mode for thermal display
+     */
+    fun setPseudocolorMode(mode: Int) {
+        thermalPreviewView?.setPseudocolorMode(mode)
+        Timber.d("[DEBUG_LOG] Pseudocolor mode set to: $mode")
+    }
+
+    /**
+     * Set temperature measurement region mode
+     */
+    fun setTemperatureRegionMode(mode: Int) {
+        thermalPreviewView?.temperatureRegionMode = mode
+        Timber.d("[DEBUG_LOG] Temperature region mode set to: $mode")
+    }
+
+    /**
+     * Enable/disable temperature measurement touch interaction
+     */
+    fun setTemperatureMeasurementEnabled(enabled: Boolean) {
+        thermalPreviewView?.canTouch = enabled
+        Timber.d("[DEBUG_LOG] Temperature measurement touch enabled: $enabled")
+    }
+
+    /**
+     * Clear temperature measurements
+     */
+    fun clearTemperatureMeasurements() {
+        thermalPreviewView?.clearTemperatureMeasurements()
+        Timber.d("[DEBUG_LOG] Temperature measurements cleared")
+    }
+
+    /**
+     * Check if thermal camera is connected
      */
     fun isConnected(): Boolean = isConnected.get()
 
     /**
-     * Get recording status
+     * Check if recording is in progress
      */
-    fun isRecording(): Boolean = isRecording.get()
-
-    /**
-     * Update status and notify callback
-     */
-    private fun updateStatus(status: String) {
-        mainHandler.post {
-            statusCallback?.invoke(status)
-        }
-    }
+    fun isRecording(): Boolean = dataRecorder.isRecording
 
     /**
      * Cleanup resources
      */
     fun cleanup() {
         try {
-            if (isRecording.get()) {
+            Timber.d("[DEBUG_LOG] Cleaning up thermal camera resources...")
+            
+            stopRecording()
+            
+            // Remove USB connect listener
+            usbMonitorManager.removeOnUSBConnectListener(this)
+
+            // Unregister from USB events to prevent leaks
+            usbMonitorManager.unregisterUSB()
+            
+            isConnected.set(false)
+            updateConnectionStatus(ConnectionStatus.DISCONNECTED, "Thermal camera disconnected")
+            
+            Timber.d("[DEBUG_LOG] Thermal camera cleanup completed")
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Error during thermal camera cleanup: ${e.message}")
+        }
+    }
+
+    // OnUSBConnectListener implementation
+    override fun onAttach(device: UsbDevice) {
+        Timber.d("[DEBUG_LOG] USB device attached: ${device.deviceName}, VID: 0x${device.vendorId.toString(16)}, PID: 0x${device.productId.toString(16)}")
+        
+        if (device.productId == Const.PID) {
+            Timber.d("[DEBUG_LOG] TC001 thermal camera detected")
+            updateConnectionStatus(ConnectionStatus.INITIALIZING, "TC001 thermal camera detected - initializing...")
+        }
+    }
+
+    override fun onGranted(usbDevice: UsbDevice, granted: Boolean) {
+        Timber.d("[DEBUG_LOG] USB permission granted: $granted for device: ${usbDevice.deviceName}")
+        
+        if (granted && usbDevice.productId == Const.PID) {
+            updateConnectionStatus(ConnectionStatus.INITIALIZING, "USB permission granted - connecting to TC001...")
+        } else if (!granted) {
+            updateConnectionStatus(ConnectionStatus.DISCONNECTED, "USB permission denied")
+        }
+    }
+
+    override fun onDettach(device: UsbDevice) {
+        Timber.d("[DEBUG_LOG] USB device detached: ${device.deviceName}")
+        
+        if (device.productId == Const.PID) {
+            isConnected.set(false)
+            updateConnectionStatus(ConnectionStatus.DISCONNECTED, "TC001 thermal camera disconnected")
+            
+            // Stop recording if in progress
+            if (isRecording()) {
                 stopRecording()
             }
+        }
+    }
 
-            stopThermalPreview()
+    override fun onConnect(device: UsbDevice, ctrlBlock: USBMonitor.UsbControlBlock, createNew: Boolean) {
+        Timber.d("[DEBUG_LOG] USB device connected: ${device.deviceName}")
+        
+        if (device.productId == Const.PID) {
+            isConnected.set(true)
+            updateConnectionStatus(ConnectionStatus.INITIALIZING, "TC001 thermal camera connected - initializing interface...")
+            Timber.d("[DEBUG_LOG] TC001 thermal camera successfully connected")
+        }
+    }
 
-            usbMonitor?.unregister()
-            uvcCamera?.closeUVCCamera()
-
+    override fun onDisconnect(device: UsbDevice, ctrlBlock: USBMonitor.UsbControlBlock) {
+        Timber.d("[DEBUG_LOG] USB device disconnected: ${device.deviceName}")
+        
+        if (device.productId == Const.PID) {
             isConnected.set(false)
+            updateConnectionStatus(ConnectionStatus.DISCONNECTED, "TC001 thermal camera disconnected")
+            
+            // Stop recording if in progress
+            if (isRecording()) {
+                stopRecording()
+            }
+        }
+    }
 
-            Timber.d("ThermalCameraManager cleanup completed")
+    override fun onCancel(device: UsbDevice) {
+        Timber.d("[DEBUG_LOG] USB connection cancelled for device: ${device.deviceName}")
+        updateConnectionStatus(ConnectionStatus.DISCONNECTED, "USB connection cancelled")
+    }
 
+    override fun onIRCMDInit(ircmd: IRCMD) {
+        Timber.d("[DEBUG_LOG] IRCMD initialized")
+        this.ircmd = ircmd
+        updateConnectionStatus(ConnectionStatus.INITIALIZING, "Thermal camera command interface ready - finalizing...")
+    }
+
+    override fun onCompleteInit() {
+        Timber.d("[DEBUG_LOG] Thermal camera initialization completed")
+        updateConnectionStatus(ConnectionStatus.CONNECTED, "Thermal camera ready and communicating")
+        
+        // Start preview stream when initialization is complete
+        startPreviewStream()
+    }
+    
+    /**
+     * Start thermal camera preview stream
+     */
+    private fun startPreviewStream() {
+        try {
+            Timber.d("[DEBUG_LOG] Starting thermal camera preview stream")
+            
+            val cmd = ircmd
+            if (cmd == null) {
+                handleIrcmdNotInitialized()
+                return
+            }
+            
+            val uvcCamera = usbMonitorManager.getUvcCamera()
+            if (uvcCamera == null) {
+                handleUvcCameraNotAvailable()
+                return
+            }
+            
+            initializeUvcPreview(uvcCamera)
+            startThermalPreview(cmd)
+            
         } catch (e: Exception) {
-            Timber.e(e, "Error during ThermalCameraManager cleanup")
+            Timber.e(e, "[DEBUG_LOG] Failed to start thermal preview stream")
+            updateStatus("Preview failed: ${e.message}")
         }
     }
-}
-
-/**
- * Data class for thermal frame data
- */
-data class ThermalFrame(
-    val timestamp: Long,
-    val temperatureData: DoubleArray,
-    val minTemp: Double,
-    val maxTemp: Double,
-    val avgTemp: Double,
-    val isCalibrated: Boolean,
-    val frameRate: Double = 30.0,
-    val resolution: Pair<Int, Int> = Pair(256, 192)
-) {
-    companion object {
-        fun createErrorFrame(): ThermalFrame {
-            return ThermalFrame(
-                timestamp = System.currentTimeMillis(),
-                temperatureData = doubleArrayOf(),
-                minTemp = 0.0,
-                maxTemp = 0.0,
-                avgTemp = 0.0,
-                isCalibrated = false
+    
+    /**
+     * Handle case when IRCMD is not initialized
+     */
+    private fun handleIrcmdNotInitialized() {
+        Timber.w("[DEBUG_LOG] Cannot start preview - IRCMD not initialized")
+        updateStatus("Preview unavailable - camera not ready")
+    }
+    
+    /**
+     * Handle case when UVCCamera is not available
+     */
+    private fun handleUvcCameraNotAvailable() {
+        Timber.w("[DEBUG_LOG] Cannot start preview - UVCCamera not available")
+        updateStatus("Preview unavailable - UVC camera not ready")
+    }
+    
+    /**
+     * Initialize UVC preview with frame callback
+     */
+    private fun initializeUvcPreview(uvcCamera: UVCCamera) {
+        setupFrameCallback(uvcCamera)
+        uvcCamera.setOpenStatus(true)
+        uvcCamera.onStartPreview()
+    }
+    
+    /**
+     * Start thermal preview using IRCMD API
+     */
+    private fun startThermalPreview(cmd: IRCMD) {
+        val result = cmd.startPreview(
+            CommonParams.PreviewPathChannel.PREVIEW_PATH0,
+            CommonParams.StartPreviewSource.SOURCE_SENSOR,
+            25, // Frame rate
+            CommonParams.StartPreviewMode.VOC_DVP_MODE,
+            CommonParams.DataFlowMode.IMAGE_AND_TEMP_OUTPUT
+        )
+        
+        if (result == 0) {
+            handlePreviewStartSuccess(cmd)
+        } else {
+            handlePreviewStartFailure(result)
+        }
+    }
+    
+    /**
+     * Handle successful preview start
+     */
+    private fun handlePreviewStartSuccess(cmd: IRCMD) {
+        Timber.d("[DEBUG_LOG] Thermal preview stream started successfully")
+        updateStatus("Thermal preview active")
+        configureMirrorFlipProperty(cmd)
+    }
+    
+    /**
+     * Handle preview start failure
+     */
+    private fun handlePreviewStartFailure(result: Int) {
+        Timber.e("[DEBUG_LOG] Failed to start thermal preview, result: $result")
+        updateStatus("Preview failed to start")
+    }
+    
+    /**
+     * Configure mirror flip property for thermal camera
+     */
+    private fun configureMirrorFlipProperty(cmd: IRCMD) {
+        try {
+            cmd.setPropImageParams(
+                CommonParams.PropImageParams.IMAGE_PROP_SEL_MIRROR_FLIP,
+                CommonParams.PropImageParamsValue.MirrorFlipType.NO_MIRROR_FLIP
             )
+        } catch (e: Exception) {
+            Timber.w(e, "[DEBUG_LOG] Failed to set mirror flip property: ${e.message}")
         }
     }
+    
+    /**
+     * Set up frame callback to receive and process thermal frames
+     */
+    private fun setupFrameCallback(uvcCamera: UVCCamera) {
+        try {
+            val frameCallback = IFrameCallback { frame ->
+                try {
+                    if (frame != null && frame.isNotEmpty()) {
+                        Timber.d("[DEBUG_LOG] Received thermal frame: ${frame.size} bytes")
+                        
+                        // Process thermal frame data
+                        processThermalFrameData(frame)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "[DEBUG_LOG] Error in frame callback: ${e.message}")
+                }
+            }
+            
+            // Set the frame callback on UVCCamera
+            uvcCamera.setFrameCallback(frameCallback)
+            Timber.d("[DEBUG_LOG] Frame callback set up successfully")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Failed to set up frame callback: ${e.message}")
+        }
+    }
+    
+    /**
+     * Process thermal frame data and update preview
+     */
+    private fun processThermalFrameData(frame: ByteArray) {
+        try {
+            if (!isValidThermalFrame(frame)) return
+            
+            // Write frame data to file if recording is active
+            if (dataRecorder.isRecording) {
+                dataRecorder.writeFrame(frame)
+            }
+            
+            val imageData = extractImageDataFromFrame(frame)
+            val temperatureData = extractTemperatureDataFromFrame(frame)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+            imageData?.let { updateThermalPreview(it) }
 
-        other as ThermalFrame
-
-        if (timestamp != other.timestamp) return false
-        if (!temperatureData.contentEquals(other.temperatureData)) return false
-        if (minTemp != other.minTemp) return false
-        if (maxTemp != other.maxTemp) return false
-        if (avgTemp != other.avgTemp) return false
-        if (isCalibrated != other.isCalibrated) return false
-        if (frameRate != other.frameRate) return false
-        if (resolution != other.resolution) return false
-
+            temperatureData?.let { data ->
+                ThermalDataParser.parse(data)?.let { parsedData ->
+                    temperatureCallback?.invoke(parsedData.maxTemp, parsedData.minTemp, parsedData.avgTemp)
+                    
+                    // Send real-time thermal data to PC if network streaming is enabled
+                    networkManager?.let { network ->
+                        if (network.isDataStreamingActive()) {
+                            val dataPacket = CommandProtocol.createThermalDataPacket(
+                                maxTemp = parsedData.maxTemp,
+                                minTemp = parsedData.minTemp,
+                                centerTemp = parsedData.avgTemp,
+                                sessionId = currentSessionId
+                            )
+                            network.sendDataPacket(dataPacket)
+                        }
+                    }
+                }
+            }
+            notifyThermalFrameCallback(frame)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Error processing thermal frame data: ${e.message}")
+        }
+    }
+    
+    /**
+     * Validate thermal frame data
+     */
+    private fun isValidThermalFrame(frame: ByteArray): Boolean {
+        if (frame.isEmpty()) return false
+        
+        // Check for bad frame (last byte == 1 indicates bad frame)
+        if (frame[frame.size - 1] == 1.toByte()) {
+            Timber.w("[DEBUG_LOG] Bad frame detected, skipping")
+            return false
+        }
+        
         return true
     }
+    
+    /**
+     * Extract image data from thermal frame
+     */
+    private fun extractImageDataFromFrame(frame: ByteArray): ByteArray? {
+        val dataLength = frame.size - 1 // Exclude status byte
+        val imageDataLength = dataLength / 2
+        
+        if (dataLength < imageDataLength * 2) {
+            Timber.w("[DEBUG_LOG] Insufficient frame data: ${frame.size} bytes")
+            return null
+        }
+        
+        // Extract image data (first half)
+        val imageData = ByteArray(imageDataLength)
+        System.arraycopy(frame, 0, imageData, 0, imageDataLength)
+        return imageData
+    }
 
-    override fun hashCode(): Int {
-        var result = timestamp.hashCode()
-        result = 31 * result + temperatureData.contentHashCode()
-        result = 31 * result + minTemp.hashCode()
-        result = 31 * result + maxTemp.hashCode()
-        result = 31 * result + avgTemp.hashCode()
-        result = 31 * result + isCalibrated.hashCode()
-        result = 31 * result + frameRate.hashCode()
-        result = 31 * result + resolution.hashCode()
-        return result
+    /**
+     * Extracts the dedicated temperature data block from the second half of the raw frame.
+     * The format of this block is specific to the camera's firmware.
+     */
+    private fun extractTemperatureDataFromFrame(frame: ByteArray): ByteArray? {
+        val dataLength = frame.size - 1 // Exclude status byte
+        val imageDataLength = dataLength / 2
+        val temperatureDataLength = dataLength - imageDataLength
+
+        if (dataLength < imageDataLength + temperatureDataLength) {
+            Timber.w("[DEBUG_LOG] Insufficient frame data for temperature extraction: ${frame.size} bytes")
+            return null
+        }
+
+        // Extract temperature data (second half of the payload)
+        val temperatureData = ByteArray(temperatureDataLength)
+        System.arraycopy(frame, imageDataLength, temperatureData, 0, temperatureDataLength)
+        Timber.v("Extracted temperature data block: ${temperatureData.size} bytes")
+        return temperatureData
+    }
+    
+    /**
+     * Update thermal preview with processed image data
+     */
+    private fun updateThermalPreview(imageData: ByteArray) {
+        // Use enhanced thermal preview if available
+        thermalPreviewView?.let { previewView ->
+            mainHandler.post {
+                previewView.updateThermalFrame(imageData, 256, 192)
+            }
+            return
+        }
+        
+        // Fallback to legacy ImageView preview
+        val bitmap = convertThermalDataToBitmap(imageData)
+        mainHandler.post {
+            previewImageView?.setImageBitmap(bitmap)
+        }
+    }
+    
+    /**
+     * Notify thermal frame callback if set
+     */
+    private fun notifyThermalFrameCallback(frame: ByteArray) {
+        thermalFrameCallback?.invoke(frame, System.currentTimeMillis())
+    }
+    
+    /**
+     * Convert thermal data to displayable bitmap
+     */
+    private fun convertThermalDataToBitmap(thermalData: ByteArray): Bitmap? {
+        return try {
+            val width = 256
+            val height = 192
+            
+            if (!isValidThermalDataSize(thermalData, width, height)) {
+                return null
+            }
+            
+            val pixels = processThermalPixels(thermalData, width * height)
+            Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
+            
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Error converting thermal data to bitmap: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * Validate thermal data size for bitmap conversion
+     */
+    private fun isValidThermalDataSize(thermalData: ByteArray, width: Int, height: Int): Boolean {
+        val requiredSize = width * height * 2 // 16-bit thermal data
+        if (thermalData.size < requiredSize) {
+            Timber.w("[DEBUG_LOG] Thermal data size insufficient: ${thermalData.size}")
+            return false
+        }
+        return true
+    }
+    
+    /**
+     * Process thermal data into pixel array
+     */
+    private fun processThermalPixels(thermalData: ByteArray, pixelCount: Int): IntArray {
+        val pixels = IntArray(pixelCount)
+        
+        for (i in 0 until pixelCount) {
+            val thermalValue = extractThermalValue(thermalData, i)
+            val grayValue = convertThermalToGrayscale(thermalValue)
+            pixels[i] = createArgbPixel(grayValue)
+        }
+        
+        return pixels
+    }
+    
+    /**
+     * Extract 16-bit thermal value from data array
+     */
+    private fun extractThermalValue(thermalData: ByteArray, pixelIndex: Int): Int {
+        val byteIndex = pixelIndex * 2
+        return ((thermalData[byteIndex].toInt() and 0xFF) or 
+                ((thermalData[byteIndex + 1].toInt() and 0xFF) shl 8))
+    }
+    
+    /**
+     * Convert thermal value to grayscale (0-255)
+     */
+    private fun convertThermalToGrayscale(thermalValue: Int): Int {
+        return ((thermalValue.toFloat() / 65535.0f) * 255.0f).toInt().coerceIn(0, 255)
+    }
+    
+    /**
+     * Create ARGB pixel from grayscale value
+     */
+    private fun createArgbPixel(grayValue: Int): Int {
+        return (0xFF shl 24) or (grayValue shl 16) or (grayValue shl 8) or grayValue
+    }
+
+    override fun onSetPreviewSizeFail() {
+        Timber.w("[DEBUG_LOG] Failed to set preview size")
+        updateStatus("Failed to set thermal camera preview size")
+    }
+
+    /**
+     * Update connection status with color indicator
+     */
+    private fun updateConnectionStatus(newStatus: ConnectionStatus, message: String) {
+        connectionStatus = newStatus
+        mainHandler.post {
+            connectionStatusCallback?.invoke(newStatus, message)
+            statusCallback?.invoke(message) // Also update legacy status callback
+        }
+        Timber.d("[DEBUG_LOG] Connection Status: $newStatus - $message")
+    }
+
+    /**
+     * Update status and notify callback (legacy method)
+     */
+    private fun updateStatus(status: String) {
+        mainHandler.post {
+            statusCallback?.invoke(status)
+        }
+        Timber.d("[DEBUG_LOG] Status: $status")
     }
 }

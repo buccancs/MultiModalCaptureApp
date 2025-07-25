@@ -1,14 +1,12 @@
 package com.multimodal.capture
 
 import android.Manifest
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
+import android.os.IBinder
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -17,14 +15,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.viewpager2.widget.ViewPager2
 import com.multimodal.capture.databinding.ActivityMainBinding
 import com.multimodal.capture.service.RecordingService
 import com.multimodal.capture.service.NetworkService
 import com.multimodal.capture.viewmodel.MainViewModel
 import com.multimodal.capture.utils.PermissionManager
 import com.multimodal.capture.utils.SettingsManager
+import com.multimodal.capture.utils.LoggingManager
 import com.multimodal.capture.data.RecordingConfig
 import com.multimodal.capture.ui.BluetoothDeviceActivity
+import com.multimodal.capture.ui.adapters.MainPagerAdapter
+import com.multimodal.capture.ui.components.CustomBottomNavigationView
 import timber.log.Timber
 
 /**
@@ -38,9 +40,14 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
     private lateinit var permissionManager: PermissionManager
     private lateinit var settingsManager: SettingsManager
     
-    // USB device handling
-    private lateinit var usbManager: UsbManager
-    private var usbPermissionReceiver: BroadcastReceiver? = null
+    // Navigation components
+    private lateinit var viewPager: ViewPager2
+    private lateinit var bottomNavigation: CustomBottomNavigationView
+    private lateinit var pagerAdapter: MainPagerAdapter
+    
+    // Service connection
+    private var recordingService: RecordingService? = null
+    private var isServiceBound = false
     
     // Track if services have been initialized
     private var servicesInitialized = false
@@ -73,11 +80,17 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize Timber for logging
-        Timber.plant(Timber.DebugTree())
+        // Initialize comprehensive logging system
+        LoggingManager.getInstance().initialize(this, enableFileLogging = true)
         
+        // Use enhanced layout with ViewPager2 and CustomBottomNavigationView
+        setContentView(R.layout.activity_main_enhanced)
+        
+        // Initialize navigation components
+        initializeNavigation()
+        
+        // Initialize binding for backward compatibility (create minimal binding)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
         
         // Initialize ViewModel
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
@@ -89,130 +102,99 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
         // Initialize Settings Manager
         settingsManager = SettingsManager.getInstance(this)
         
-        // Initialize USB Manager
-        usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        
-        // Setup USB permission receiver
-        setupUsbPermissionReceiver()
-        
         // Load current recording configuration
         loadRecordingConfiguration()
         
-        // Setup UI
-        setupUI()
-        
         // Setup observers
         setupObservers()
-        
-        // Handle USB device attachment intent
-        handleUsbDeviceAttachment(intent)
         
         // Request all permissions at startup
         permissionManager.requestAllPermissions()
     }
     
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        intent?.let { handleUsbDeviceAttachment(it) }
+    override fun onStart() {
+        super.onStart()
+        // Bind to RecordingService
+        Intent(this, RecordingService::class.java).also { intent ->
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Unbind from the service
+        if (isServiceBound) {
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
     }
     
     /**
-     * Setup USB permission receiver for handling USB permission responses
+     * Initialize ViewPager2 and CustomBottomNavigationView
      */
-    private fun setupUsbPermissionReceiver() {
-        usbPermissionReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val action = intent.action
-                if (ACTION_USB_PERMISSION == action) {
-                    synchronized(this) {
-                        val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                            device?.let {
-                                Timber.d("USB permission granted for device: ${it.deviceName}")
-                                Toast.makeText(this@MainActivity, "USB permission granted for thermal camera", Toast.LENGTH_SHORT).show()
-                                // Notify that USB permission is granted
-                                onUsbPermissionGranted(it)
-                            }
-                        } else {
-                            Timber.d("USB permission denied for device: ${device?.deviceName}")
-                            Toast.makeText(this@MainActivity, "USB permission denied for thermal camera", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
+    private fun initializeNavigation() {
+        try {
+            // Find navigation components
+            viewPager = findViewById(R.id.view_pager)
+            bottomNavigation = findViewById(R.id.bottom_navigation)
+            
+            // Create and set adapter
+            pagerAdapter = MainPagerAdapter(this)
+            viewPager.adapter = pagerAdapter
+            
+            // Configure ViewPager2 settings based on IRCamera patterns
+            viewPager.offscreenPageLimit = 3 // Keep all fragments in memory for smooth transitions
+            viewPager.isUserInputEnabled = false // Disable user swiping for controlled navigation
+            
+            // Set default tab to Capture (center tab)
+            viewPager.setCurrentItem(MainPagerAdapter.TAB_CAPTURE, false)
+            
+            // Set up navigation callbacks
+            setupNavigationCallbacks()
+            
+            Timber.d("[DEBUG_LOG] Navigation components initialized successfully")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "[DEBUG_LOG] Failed to initialize navigation components")
+        }
+    }
+    
+    /**
+     * Set up callbacks between ViewPager2 and CustomBottomNavigationView
+     */
+    private fun setupNavigationCallbacks() {
+        // Handle bottom navigation tab selection
+        bottomNavigation.onTabSelectedListener = { tabIndex ->
+            Timber.d("[DEBUG_LOG] Bottom navigation tab selected: $tabIndex")
+            viewPager.setCurrentItem(tabIndex, false) // false for no smooth scrolling since user input is disabled
         }
         
-        // Register the receiver with proper flags for Android 13+
-        val filter = IntentFilter(ACTION_USB_PERMISSION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(usbPermissionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(usbPermissionReceiver, filter)
-        }
-    }
-    
-    /**
-     * Handle USB device attachment intent
-     */
-    private fun handleUsbDeviceAttachment(intent: Intent) {
-        if (UsbManager.ACTION_USB_DEVICE_ATTACHED == intent.action) {
-            val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-            device?.let {
-                Timber.d("USB device attached: ${it.deviceName}, VendorId: ${it.vendorId}, ProductId: ${it.productId}")
-                
-                // Check if this is a Topdon thermal camera
-                if (isThermalCamera(it)) {
-                    Timber.d("Topdon thermal camera detected")
-                    Toast.makeText(this, "Topdon thermal camera detected", Toast.LENGTH_SHORT).show()
-                    
-                    // Request USB permission
-                    requestUsbPermission(it)
-                }
+        // Handle ViewPager2 page changes (in case we need to sync from other sources)
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                Timber.d("[DEBUG_LOG] ViewPager page selected: $position")
+                bottomNavigation.setSelectedTabSilently(position)
             }
-        }
+        })
     }
     
-    /**
-     * Check if the USB device is a Topdon thermal camera
-     */
-    private fun isThermalCamera(device: UsbDevice): Boolean {
-        val vendorId = device.vendorId
-        val productId = device.productId
-        
-        // Check against known Topdon vendor/product IDs
-        return when (vendorId) {
-            0x1f3a -> productId in listOf(0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007, 0x1008, 0x1009, 0x100a, 0x100b, 0x100c, 0x100d, 0x100e, 0x100f, 0x1010)
-            0x3538 -> productId in listOf(0x0902)
-            else -> false
+    /** Defines callbacks for service binding, passed to bindService()  */
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as RecordingService.RecordingBinder
+            recordingService = binder.getService()
+            isServiceBound = true
+            viewModel.setRecordingService(recordingService)
+            Timber.d("RecordingService connected and bound to ViewModel.")
         }
-    }
-    
-    /**
-     * Request USB permission for the device
-     */
-    private fun requestUsbPermission(device: UsbDevice) {
-        if (usbManager.hasPermission(device)) {
-            Timber.d("USB permission already granted for device: ${device.deviceName}")
-            onUsbPermissionGranted(device)
-        } else {
-            Timber.d("Requesting USB permission for device: ${device.deviceName}")
-            val permissionIntent = PendingIntent.getBroadcast(
-                this, 0, Intent(ACTION_USB_PERMISSION), 
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            usbManager.requestPermission(device, permissionIntent)
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            isServiceBound = false
+            recordingService = null
+            viewModel.setRecordingService(null)
+            Timber.w("RecordingService disconnected.")
         }
-    }
-    
-    /**
-     * Handle USB permission granted for thermal camera
-     */
-    private fun onUsbPermissionGranted(device: UsbDevice) {
-        Timber.d("Processing USB permission granted for device: ${device.deviceName}")
-        // TODO: Integrate with ThermalCameraManager to establish connection
-        // For now, just show a success message
-        Toast.makeText(this, "Ready to connect to thermal camera", Toast.LENGTH_SHORT).show()
     }
     
     /**
@@ -223,9 +205,6 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
             currentRecordingConfig = settingsManager.loadRecordingConfig()
             Timber.d("Loaded recording configuration: ${currentRecordingConfig?.getSummary()}")
             
-            // Update UI based on configuration
-            updateDeviceStatusIndicators()
-            
         } catch (e: Exception) {
             Timber.e(e, "Failed to load recording configuration")
             // Use default configuration
@@ -233,200 +212,14 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
         }
     }
     
-    /**
-     * Update device status indicators based on configuration and connectivity
-     */
-    private fun updateDeviceStatusIndicators() {
-        currentRecordingConfig?.let { config ->
-            // Update camera status
-            updateCameraStatus(config.camera.enabled)
-            
-            // Update thermal status
-            updateThermalStatus(config.thermal.enabled)
-            
-            // Update shimmer status
-            updateShimmerStatus(config.shimmer.enabled, config.shimmer.isConfigured())
-        }
-    }
-    
-    /**
-     * Update camera status indicator
-     */
-    private fun updateCameraStatus(enabled: Boolean) {
-        if (enabled) {
-            binding.tvCameraStatus.text = getString(R.string.status_camera_ready)
-            binding.tvCameraStatus.setCompoundDrawablesWithIntrinsicBounds(
-                R.drawable.ic_camera, 0, 0, 0
-            )
-            binding.tvCameraStatus.compoundDrawables[0]?.setTint(
-                ContextCompat.getColor(this, R.color.status_ready)
-            )
-        } else {
-            binding.tvCameraStatus.text = "Camera Disabled"
-            binding.tvCameraStatus.setCompoundDrawablesWithIntrinsicBounds(
-                R.drawable.ic_camera, 0, 0, 0
-            )
-            binding.tvCameraStatus.compoundDrawables[0]?.setTint(
-                ContextCompat.getColor(this, R.color.status_disabled)
-            )
-        }
-    }
-    
-    /**
-     * Update thermal camera status indicator
-     */
-    private fun updateThermalStatus(enabled: Boolean) {
-        if (enabled) {
-            binding.tvThermalStatus.text = "Thermal Ready"
-            binding.tvThermalStatus.setCompoundDrawablesWithIntrinsicBounds(
-                R.drawable.ic_thermal, 0, 0, 0
-            )
-            binding.tvThermalStatus.compoundDrawables[0]?.setTint(
-                ContextCompat.getColor(this, R.color.status_ready)
-            )
-        } else {
-            binding.tvThermalStatus.text = "Thermal Disabled"
-            binding.tvThermalStatus.setCompoundDrawablesWithIntrinsicBounds(
-                R.drawable.ic_thermal, 0, 0, 0
-            )
-            binding.tvThermalStatus.compoundDrawables[0]?.setTint(
-                ContextCompat.getColor(this, R.color.status_disabled)
-            )
-        }
-    }
-    
-    /**
-     * Update Shimmer GSR sensor status indicator
-     */
-    private fun updateShimmerStatus(enabled: Boolean, configured: Boolean) {
-        when {
-            !enabled -> {
-                binding.tvGsrStatus.text = "GSR Disabled"
-                binding.tvGsrStatus.setCompoundDrawablesWithIntrinsicBounds(
-                    R.drawable.ic_sensor, 0, 0, 0
-                )
-                binding.tvGsrStatus.compoundDrawables[0]?.setTint(
-                    ContextCompat.getColor(this, R.color.status_disabled)
-                )
-            }
-            enabled && !configured -> {
-                binding.tvGsrStatus.text = "GSR Not Configured"
-                binding.tvGsrStatus.setCompoundDrawablesWithIntrinsicBounds(
-                    R.drawable.ic_sensor, 0, 0, 0
-                )
-                binding.tvGsrStatus.compoundDrawables[0]?.setTint(
-                    ContextCompat.getColor(this, R.color.status_warning)
-                )
-            }
-            enabled && configured -> {
-                // Check actual connection status from ViewModel
-                val isConnected = viewModel.isConnected.value ?: false
-                if (isConnected) {
-                    binding.tvGsrStatus.text = getString(R.string.status_gsr_connected)
-                    binding.tvGsrStatus.setCompoundDrawablesWithIntrinsicBounds(
-                        R.drawable.ic_sensor, 0, 0, 0
-                    )
-                    binding.tvGsrStatus.compoundDrawables[0]?.setTint(
-                        ContextCompat.getColor(this, R.color.status_connected)
-                    )
-                } else {
-                    binding.tvGsrStatus.text = getString(R.string.status_gsr_disconnected)
-                    binding.tvGsrStatus.setCompoundDrawablesWithIntrinsicBounds(
-                        R.drawable.ic_sensor, 0, 0, 0
-                    )
-                    binding.tvGsrStatus.compoundDrawables[0]?.setTint(
-                        ContextCompat.getColor(this, R.color.status_disconnected)
-                    )
-                }
-            }
-        }
-    }
-    
-    private fun setupUI() {
-        // Camera preview button
-        binding.btnCameraPreview.setOnClickListener {
-            val previewIntent = Intent(this, com.multimodal.capture.ui.PreviewActivity::class.java)
-            startActivity(previewIntent)
-        }
-        
-        // Recording control button
-        binding.btnRecordingControl.setOnClickListener {
-            if (viewModel.isRecording.value == true) {
-                stopRecording()
-            } else {
-                // Check recording permissions before starting
-                if (checkRecordingPermissions()) {
-                    startRecording()
-                } else {
-                    requestRecordingPermissions()
-                }
-            }
-        }
-        
-        
-        // Bluetooth scan button
-        binding.btnBluetoothScan.setOnClickListener {
-            // Check Bluetooth permissions before scanning
-            if (checkBluetoothPermissions()) {
-                // Launch BluetoothDeviceActivity for device selection
-                val bluetoothIntent = Intent(this, BluetoothDeviceActivity::class.java)
-                bluetoothDeviceSelectionLauncher.launch(bluetoothIntent)
-            } else {
-                requestBluetoothPermissions()
-            }
-        }
-        
-        // Settings button
-        binding.btnSettings.setOnClickListener {
-            val settingsIntent = Intent(this, com.multimodal.capture.ui.SettingsActivity::class.java)
-            startActivity(settingsIntent)
-        }
-    }
     
     private fun setupObservers() {
-        // Recording state
-        viewModel.isRecording.observe(this) { isRecording ->
-            updateRecordingButton(isRecording)
-        }
-        
-        
-        // Camera status
-        viewModel.cameraStatus.observe(this) { status ->
-            binding.tvCameraStatus.text = status
-        }
-        
-        // Thermal camera status
-        viewModel.thermalStatus.observe(this) { status ->
-            binding.tvThermalStatus.text = status
-        }
-        
-        // GSR sensor status
-        viewModel.gsrStatus.observe(this) { status ->
-            binding.tvGsrStatus.text = status
-        }
-        
-        // Network status
-        viewModel.networkStatus.observe(this) { status ->
-            binding.tvNetworkStatus.text = status
-        }
-        
-        // GSR value
-        viewModel.gsrValue.observe(this) { value ->
-            binding.tvGsrValue.text = getString(R.string.gsr_value, value)
-        }
-        
-        // Heart rate
-        viewModel.heartRate.observe(this) { heartRate ->
-            binding.tvHeartRate.text = getString(R.string.heart_rate_value, heartRate)
-        }
-        
-        // Error messages
+        // Error messages - only essential observer for MainActivity
         viewModel.errorMessage.observe(this) { message ->
             if (message.isNotEmpty()) {
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             }
         }
-        
     }
     
     // PermissionCallback interface implementations
@@ -535,126 +328,48 @@ class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
     }
     
     
-    private fun startRecording() {
-        Timber.d("Starting recording...")
-        
-        // Generate session ID with timestamp
-        val sessionId = "Session_${System.currentTimeMillis()}"
-        val startTimestamp = SystemClock.elapsedRealtimeNanos()
-        
-        // Start recording service
-        val recordingIntent = Intent(this, RecordingService::class.java).apply {
-            action = RecordingService.ACTION_START_RECORDING
-            putExtra(RecordingService.EXTRA_SESSION_ID, sessionId)
-            putExtra(RecordingService.EXTRA_START_TIMESTAMP, startTimestamp)
-        }
-        
-        // Use appropriate service start method based on API level
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(recordingIntent)
-        } else {
-            startService(recordingIntent)
-        }
-        
-        // Update ViewModel
-        viewModel.startRecording(sessionId, startTimestamp)
-        
-        Timber.d("Recording started with session ID: $sessionId")
-    }
-    
-    private fun stopRecording() {
-        Timber.d("Stopping recording...")
-        
-        // Stop recording service
-        val recordingIntent = Intent(this, RecordingService::class.java).apply {
-            action = RecordingService.ACTION_STOP_RECORDING
-        }
-        startService(recordingIntent)
-        
-        // Update ViewModel
-        viewModel.stopRecording()
-        
-        Timber.d("Recording stopped")
-    }
-    
-    private fun updateRecordingButton(isRecording: Boolean) {
-        if (isRecording) {
-            binding.btnRecordingControl.text = getString(R.string.stop_recording)
-            binding.btnRecordingControl.setBackgroundColor(
-                ContextCompat.getColor(this, R.color.record_stop)
-            )
-        } else {
-            binding.btnRecordingControl.text = getString(R.string.start_recording)
-            binding.btnRecordingControl.setBackgroundColor(
-                ContextCompat.getColor(this, R.color.record_start)
-            )
-        }
-    }
-    
     
     /**
-     * Request permissions for Bluetooth scanning feature
+     * Enhanced onDestroy method with comprehensive resource cleanup
+     * to prevent memory leaks and ensure proper application shutdown.
      */
-    private fun requestBluetoothPermissions() {
-        val bluetoothPermissions = listOf(
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        
-        permissionManager.requestPermissionsForFeature("Bluetooth Scanning", bluetoothPermissions)
-    }
-    
-    /**
-     * Request permissions for recording feature
-     */
-    private fun requestRecordingPermissions() {
-        val recordingPermissions = listOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        )
-        
-        permissionManager.requestPermissionsForFeature("Recording", recordingPermissions)
-    }
-    
-    /**
-     * Check if recording permissions are available before starting recording
-     */
-    private fun checkRecordingPermissions(): Boolean {
-        return permissionManager.isPermissionGranted(Manifest.permission.CAMERA) &&
-               permissionManager.isPermissionGranted(Manifest.permission.RECORD_AUDIO)
-    }
-    
-    /**
-     * Check if Bluetooth permissions are available before scanning
-     */
-    private fun checkBluetoothPermissions(): Boolean {
-        return permissionManager.isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT) &&
-               permissionManager.isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN) &&
-               permissionManager.isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)
-    }
-    
     override fun onDestroy() {
         super.onDestroy()
         
-        // Unregister USB permission receiver
-        usbPermissionReceiver?.let {
-            try {
-                unregisterReceiver(it)
-                usbPermissionReceiver = null
-                Timber.d("USB permission receiver unregistered")
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to unregister USB permission receiver")
+        try {
+            Timber.d("Starting MainActivity cleanup process...")
+            
+            // Cleanup camera resources first to release hardware locks
+            cleanupCameraResources()
+            
+            // Unbind from service if it's still bound
+            if (isServiceBound) {
+                unbindService(serviceConnection)
+                isServiceBound = false
             }
+            
+            // Clear all ViewModel observers to prevent memory leaks
+            // This is critical for preventing activity context leaks
+            viewModel.errorMessage.removeObservers(this)
+            
+            // Stop background services gracefully
+            stopService(Intent(this, RecordingService::class.java))
+            stopService(Intent(this, NetworkService::class.java))
+            
+            // Clear object references to help garbage collection
+            currentRecordingConfig = null
+            
+            // Cleanup logging manager resources
+            LoggingManager.getInstance().cleanup()
+            
+            Timber.d("MainActivity cleanup completed successfully")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Error during MainActivity cleanup - some resources may not have been released properly")
         }
-        
-        // Stop services
-        stopService(Intent(this, RecordingService::class.java))
-        stopService(Intent(this, NetworkService::class.java))
     }
     
     companion object {
         private const val TAG = "MainActivity"
-        private const val ACTION_USB_PERMISSION = "com.multimodal.capture.USB_PERMISSION"
     }
 }

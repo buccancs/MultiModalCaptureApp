@@ -188,6 +188,13 @@
             android:defaultValue="true"
             android:icon="@drawable/ic_network" />
 
+        <SwitchPreferenceCompat
+            android:key="gsr_demo_mode"
+            android:title="GSR Demo Mode"
+            android:summary="Use simulated GSR data instead of real Shimmer sensor"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_sensor" />
+
     </PreferenceCategory>
 
     <!-- Network Settings Category -->

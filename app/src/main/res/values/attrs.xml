@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TitleView Custom Attributes -->
+    <declare-styleable name="TitleView">
+        <attr name="titleText" format="string" />
+        <attr name="leftDrawable" format="reference" />
+        <attr name="rightDrawable" format="reference" />
+        <attr name="rightDrawable2" format="reference" />
+        <attr name="showLeftIcon" format="boolean" />
+        <attr name="titleTextColor" format="color" />
+        <attr name="iconTint" format="color" />
+    </declare-styleable>
+
+    <!-- StatusIndicatorView Custom Attributes -->
+    <declare-styleable name="StatusIndicatorView">
+        <attr name="statusText" format="string" />
+        <attr name="statusColor" format="color" />
+        <attr name="statusIcon" format="reference" />
+        <attr name="showIcon" format="boolean" />
+        <attr name="indicatorSize" format="dimension" />
+    </declare-styleable>
+
+    <!-- CustomBottomNavigationView Custom Attributes -->
+    <declare-styleable name="CustomBottomNavigationView">
+        <attr name="selectedTabColor" format="color" />
+        <attr name="unselectedTabColor" format="color" />
+        <attr name="tabBackgroundColor" format="color" />
+        <attr name="defaultSelectedTab" format="integer" />
+    </declare-styleable>
+
+    <!-- MainTitleView Custom Attributes -->
+    <declare-styleable name="MainTitleView">
+        <attr name="primaryTitle" format="string" />
+        <attr name="secondaryTitle" format="string" />
+        <attr name="showDualTabs" format="boolean" />
+        <attr name="leftActionDrawable" format="reference" />
+        <attr name="rightActionDrawable" format="reference" />
+        <attr name="rightAction2Drawable" format="reference" />
+    </declare-styleable>
+
+    <!-- ThermalPreviewView Custom Attributes -->
+    <declare-styleable name="ThermalPreviewView">
+        <attr name="showTemperatureOverlay" format="boolean" />
+        <attr name="showControlsOverlay" format="boolean" />
+        <attr name="showCrosshair" format="boolean" />
+        <attr name="thermalPalette" format="integer" />
+        <attr name="crosshairColor" format="color" />
+    </declare-styleable>
+
+    <!-- Common Attributes -->
+    <attr name="cornerRadius" format="dimension" />
+    <attr name="strokeWidth" format="dimension" />
+    <attr name="strokeColor" format="color" />
+    <attr name="backgroundTint" format="color" />
+    <attr name="animationDuration" format="integer" />
+</resources>

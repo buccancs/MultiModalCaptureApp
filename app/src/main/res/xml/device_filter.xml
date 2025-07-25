@@ -22,6 +22,12 @@
     <!-- Additional Topdon vendor ID: 0x3538 -->
     <usb-device vendor-id="0x3538" product-id="0x0902" />
     
-    <!-- Generic thermal camera devices (if needed for testing) -->
-    <!-- <usb-device class="14" subclass="1" protocol="0" /> -->
+    <!-- Generic USB Video Class (UVC) cameras -->
+    <!-- Class 14 = Video, Subclass 1 = Video Control, Subclass 2 = Video Streaming -->
+    <usb-device class="14" subclass="1" protocol="0" />
+    <usb-device class="14" subclass="2" protocol="0" />
+    
+    <!-- Generic USB cameras that may not follow UVC standard -->
+    <!-- Class 239 = Miscellaneous Device Class (often used by cameras) -->
+    <usb-device class="239" subclass="2" protocol="1" />
 </resources>

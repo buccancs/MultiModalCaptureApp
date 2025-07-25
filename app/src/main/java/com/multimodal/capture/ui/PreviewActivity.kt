@@ -1,7 +1,5 @@
 package com.multimodal.capture.ui
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -151,35 +149,29 @@ class PreviewActivity : AppCompatActivity(), PermissionManager.PermissionCallbac
         // Add haptic feedback
         performHapticFeedback()
         
-        // Fade out current preview with animation
-        fadeOutCurrentPreview {
-            // Update camera type after fade out
-            currentCameraType = cameraType
-            
-            when (cameraType) {
-                CameraType.THERMAL -> {
-                    // Switch to thermal camera
-                    binding.cameraPreview.visibility = android.view.View.GONE
-                    binding.thermalPreview.visibility = android.view.View.VISIBLE
-                    viewModel.switchToThermalCamera(binding.thermalPreview)
-                }
-                else -> {
-                    // Switch to RGB camera
-                    binding.thermalPreview.visibility = android.view.View.GONE
-                    binding.cameraPreview.visibility = android.view.View.VISIBLE
-                    viewModel.switchToRGBCamera(cameraType.id, binding.cameraPreview)
-                }
+        // Switch preview instantly without animation
+        currentCameraType = cameraType
+        
+        when (cameraType) {
+            CameraType.THERMAL -> {
+                // Switch to thermal camera
+                binding.cameraPreview.visibility = android.view.View.GONE
+                binding.thermalPreview.visibility = android.view.View.VISIBLE
+                viewModel.switchToThermalCamera(binding.thermalPreview)
             }
-            
-            // Fade in new preview
-            fadeInNewPreview {
-                // Hide loading state and re-enable buttons
-                showCameraSwitchingLoading(false)
-                disableCameraButtons(false)
-                updateCameraButtonStates()
-                updateCameraInfo()
+            else -> {
+                // Switch to RGB camera
+                binding.thermalPreview.visibility = android.view.View.GONE
+                binding.cameraPreview.visibility = android.view.View.VISIBLE
+                viewModel.switchToRGBCamera(cameraType.id, binding.cameraPreview)
             }
         }
+        
+        // Hide loading state and re-enable buttons
+        showCameraSwitchingLoading(false)
+        disableCameraButtons(false)
+        updateCameraButtonStates()
+        updateCameraInfo()
     }
     
     private fun updateCameraButtonStates() {
@@ -343,47 +335,6 @@ class PreviewActivity : AppCompatActivity(), PermissionManager.PermissionCallbac
         }
     }
     
-    /**
-     * Fade out current preview with animation
-     */
-    private fun fadeOutCurrentPreview(onComplete: () -> Unit) {
-        val currentView = when (currentCameraType) {
-            CameraType.THERMAL -> binding.thermalPreview
-            else -> binding.cameraPreview
-        }
-        
-        currentView.animate()
-            .alpha(0f)
-            .setDuration(200)
-            .setListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    onComplete()
-                }
-            })
-            .start()
-    }
-    
-    /**
-     * Fade in new preview with animation
-     */
-    private fun fadeInNewPreview(onComplete: () -> Unit) {
-        val newView = when (currentCameraType) {
-            CameraType.THERMAL -> binding.thermalPreview
-            else -> binding.cameraPreview
-        }
-        
-        // Start with alpha 0 and fade in
-        newView.alpha = 0f
-        newView.animate()
-            .alpha(1f)
-            .setDuration(300)
-            .setListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    onComplete()
-                }
-            })
-            .start()
-    }
     
     override fun onDestroy() {
         super.onDestroy()

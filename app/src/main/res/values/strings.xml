@@ -53,10 +53,28 @@
     <!-- File management -->
     <string name="file_saved">File saved: %1$s</string>
     <string name="files_exported">Files exported successfully</string>
+    <string name="file_icon_description">File type icon</string>
+    <string name="share_file_description">Share file</string>
+    <string name="delete_file_description">Delete file</string>
+    
+    <!-- Navigation -->
+    <string name="device_management">Device Management</string>
+    <string name="devices">Devices</string>
+    <string name="main_capture">Main Capture</string>
+    <string name="capture">Capture</string>
+    <string name="settings_export">Settings &amp; Export</string>
+    <string name="settings">Settings</string>
+    <string name="sessions">Sessions</string>
     
     <!-- Notifications -->
     <string name="notification_recording_title">MultiModal Recording</string>
     <string name="notification_recording_text">Recording in progress...</string>
     <string name="notification_channel_recording">Recording Service</string>
     <string name="notification_channel_recording_desc">Notifications for recording service</string>
+    
+    <!-- Splash screen strings -->
+    <string name="splash_main_title">MultiModal Capture</string>
+    <string name="splash_subtitle">Advanced Sensor Data Collection</string>
+    <string name="splash_version_info">Version 1.0.0</string>
+    <string name="app_logo_description">Application logo</string>
 </resources>

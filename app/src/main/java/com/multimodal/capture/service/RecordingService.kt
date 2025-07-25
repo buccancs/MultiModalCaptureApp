@@ -10,6 +10,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.multimodal.capture.MainActivity
 import com.multimodal.capture.R
+import com.multimodal.capture.capture.CameraManager
+import com.multimodal.capture.capture.GSRSensorManager
+import com.multimodal.capture.capture.ThermalCameraManager
 import timber.log.Timber
 
 /**
@@ -22,6 +25,11 @@ class RecordingService : Service() {
     private var isRecording = false
     private var currentSessionId: String = ""
     private var startTimestamp: Long = 0L
+
+    // Sensor Managers - The service now owns the managers
+    private lateinit var gsrSensorManager: GSRSensorManager
+    private lateinit var thermalCameraManager: ThermalCameraManager
+    // private lateinit var cameraManager: CameraManager // Add if needed
     
     // Notification
     private val notificationId = 1001
@@ -35,6 +43,7 @@ class RecordingService : Service() {
         super.onCreate()
         Timber.d("RecordingService created")
         createNotificationChannel()
+        initializeSensorManagers()
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -63,15 +72,29 @@ class RecordingService : Service() {
     }
     
     /**
+     * Initialize all sensor managers that this service will control.
+     */
+    private fun initializeSensorManagers() {
+        gsrSensorManager = GSRSensorManager(this)
+        gsrSensorManager.setStatusCallback { status -> Timber.i("GSR Status: $status") }
+
+        thermalCameraManager = ThermalCameraManager(this)
+        thermalCameraManager.initialize()
+        thermalCameraManager.setStatusCallback { status -> Timber.i("Thermal Status: $status") }
+
+        Timber.d("Sensor managers initialized in RecordingService")
+    }
+    
+    /**
      * Start recording session
      */
-    private fun startRecording(sessionId: String, timestamp: Long) {
+    fun startRecording(sessionId: String, timestamp: Long): Boolean {
         if (isRecording) {
             Timber.w("Recording already in progress")
-            return
+            return false
         }
         
-        try {
+        return try {
             currentSessionId = sessionId
             startTimestamp = timestamp
             isRecording = true
@@ -80,6 +103,11 @@ class RecordingService : Service() {
             val notification = createRecordingNotification(sessionId)
             startForeground(notificationId, notification)
             
+            // Start recording on all relevant managers
+            val outputDir = getExternalFilesDir("sessions/$sessionId")!!
+            gsrSensorManager.startRecording(sessionId, timestamp)
+            thermalCameraManager.startRecording(sessionId, outputDir)
+
             Timber.d("Recording service started for session: $sessionId")
             
             // Broadcast recording started
@@ -89,26 +117,33 @@ class RecordingService : Service() {
             }
             sendBroadcast(broadcastIntent)
             
+            true
         } catch (e: Exception) {
             Timber.e(e, "Failed to start recording service")
+            isRecording = false
             stopSelf()
+            false
         }
     }
     
     /**
      * Stop recording session
      */
-    private fun stopRecording() {
+    fun stopRecording(): Boolean {
         if (!isRecording) {
             Timber.w("No recording in progress")
-            return
+            return false
         }
         
-        try {
+        return try {
             isRecording = false
             
             // Stop foreground service
             stopForeground(true)
+
+            // Stop recording on all managers
+            gsrSensorManager.stopRecording()
+            thermalCameraManager.stopRecording()
             
             Timber.d("Recording service stopped for session: $currentSessionId")
             
@@ -126,8 +161,10 @@ class RecordingService : Service() {
             // Stop service
             stopSelf()
             
+            true
         } catch (e: Exception) {
             Timber.e(e, "Error stopping recording service")
+            false
         }
     }
     
@@ -320,6 +357,22 @@ class RecordingService : Service() {
         }
     }
     
+    /**
+     * Provide access to the GSR manager for the UI to bind to.
+     * @return The instance of GSRSensorManager.
+     */
+    fun getGSRManager(): GSRSensorManager {
+        return gsrSensorManager
+    }
+
+    /**
+     * Provide access to the Thermal manager for the UI to bind to.
+     * @return The instance of ThermalCameraManager.
+     */
+    fun getThermalManager(): ThermalCameraManager {
+        return thermalCameraManager
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         
@@ -327,6 +380,9 @@ class RecordingService : Service() {
             stopRecording()
         }
         
+        // Clean up sensor managers
+        gsrSensorManager.cleanup()
+        thermalCameraManager.cleanup()
         Timber.d("RecordingService destroyed")
     }
     

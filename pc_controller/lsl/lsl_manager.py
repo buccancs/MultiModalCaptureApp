@@ -84,15 +84,50 @@ class LSLStreamInfo:
 
 @dataclass
 class LSLStreamData:
-    """Container for LSL stream data."""
+    """Container for LSL stream data with memory optimization."""
     stream_info: LSLStreamInfo
+    max_samples: int = field(default=10000)  # Limit memory usage
     samples: List[List[float]] = field(default_factory=list)
     timestamps: List[float] = field(default_factory=list)
+    _sample_buffer_size: int = field(default=1000, init=False)  # Pre-allocate buffer
     
+    def __post_init__(self):
+        """Initialize optimized data structures."""
+        # Pre-allocate lists to reduce memory reallocations
+        self.samples = []
+        self.timestamps = []
+        
     def add_sample(self, sample: List[float], timestamp: float):
-        """Add a sample with timestamp."""
+        """Add a sample with timestamp using circular buffer approach."""
+        # Implement circular buffer to prevent unlimited memory growth
+        if len(self.samples) >= self.max_samples:
+            # Remove oldest samples to maintain memory limit
+            samples_to_remove = len(self.samples) - self.max_samples + 1
+            del self.samples[:samples_to_remove]
+            del self.timestamps[:samples_to_remove]
+        
         self.samples.append(sample)
         self.timestamps.append(timestamp)
+        
+    def add_samples_batch(self, samples: List[List[float]], timestamps: List[float]):
+        """Add multiple samples efficiently."""
+        if not samples or not timestamps:
+            return
+            
+        # Handle memory limit for batch operations
+        total_new_samples = len(samples)
+        current_count = len(self.samples)
+        
+        if current_count + total_new_samples > self.max_samples:
+            # Calculate how many old samples to remove
+            excess = current_count + total_new_samples - self.max_samples
+            if excess > 0:
+                del self.samples[:excess]
+                del self.timestamps[:excess]
+        
+        # Extend lists efficiently
+        self.samples.extend(samples)
+        self.timestamps.extend(timestamps)
         
     def clear(self):
         """Clear all data."""
@@ -102,6 +137,17 @@ class LSLStreamData:
     def get_sample_count(self) -> int:
         """Get number of samples."""
         return len(self.samples)
+    
+    def get_memory_usage_mb(self) -> float:
+        """Estimate memory usage in MB."""
+        if not self.samples:
+            return 0.0
+        
+        # Rough estimation: each float is 4 bytes, plus list overhead
+        sample_size = len(self.samples[0]) if self.samples else 0
+        total_floats = len(self.samples) * sample_size + len(self.timestamps)
+        bytes_used = total_floats * 4  # 4 bytes per float
+        return bytes_used / (1024 * 1024)  # Convert to MB
 
 
 class LSLStreamRecorder:
@@ -166,18 +212,18 @@ class LSLStreamRecorder:
         logging.info(f"Stopped recording LSL stream: {self.stream_info.name}")
         
     def _record_loop(self):
-        """Main recording loop."""
+        """Main recording loop with optimized batch processing."""
         if not self.inlet:
             return
             
         try:
             while self.recording:
-                # Pull samples from stream
-                samples, timestamps = self.inlet.pull_chunk(timeout=0.1)
+                # Pull samples from stream with optimized chunk size
+                samples, timestamps = self.inlet.pull_chunk(timeout=0.1, max_samples=1000)
                 
                 if samples:
-                    for sample, timestamp in zip(samples, timestamps):
-                        self.data.add_sample(sample, timestamp)
+                    # Use batch processing for better performance
+                    self.data.add_samples_batch(samples, timestamps)
                         
         except Exception as e:
             logging.error(f"Error in LSL recording loop: {e}")

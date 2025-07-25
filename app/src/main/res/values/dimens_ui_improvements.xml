@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Status Indicator Dimensions -->
+    <dimen name="status_indicator_default_size">8dp</dimen>
+    <dimen name="status_indicator_large_size">12dp</dimen>
+    <dimen name="status_indicator_small_size">6dp</dimen>
+    
+    <!-- Title View Dimensions -->
+    <dimen name="title_view_height">56dp</dimen>
+    <dimen name="title_view_icon_size">24dp</dimen>
+    <dimen name="title_view_padding">16dp</dimen>
+    
+    <!-- Bottom Navigation Dimensions -->
+    <dimen name="bottom_nav_height">56dp</dimen>
+    <dimen name="bottom_nav_icon_size">24dp</dimen>
+    <dimen name="bottom_nav_text_size">11sp</dimen>
+    
+    <!-- Device List Dimensions -->
+    <dimen name="device_item_height">72dp</dimen>
+    <dimen name="device_icon_size">40dp</dimen>
+    <dimen name="device_status_indicator_size">8dp</dimen>
+    <dimen name="device_battery_icon_size">16dp</dimen>
+    
+    <!-- Thermal Preview Dimensions -->
+    <dimen name="thermal_preview_corner_radius">8dp</dimen>
+    <dimen name="thermal_control_height">48dp</dimen>
+    
+    <!-- Animation Durations -->
+    <dimen name="animation_duration_short">150</dimen>
+    <dimen name="animation_duration_medium">300</dimen>
+    <dimen name="animation_duration_long">500</dimen>
+    
+    <!-- Spacing -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    
+    <!-- Text Sizes -->
+    <dimen name="text_size_caption">12sp</dimen>
+    <dimen name="text_size_body">14sp</dimen>
+    <dimen name="text_size_subtitle">16sp</dimen>
+    <dimen name="text_size_title">18sp</dimen>
+    <dimen name="text_size_headline">20sp</dimen>
+</resources>

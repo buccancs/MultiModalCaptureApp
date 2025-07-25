@@ -16,6 +16,7 @@ import com.multimodal.capture.network.StatusResponse
 import com.multimodal.capture.network.SyncPingMessage
 import com.multimodal.capture.network.SyncPongMessage
 import com.multimodal.capture.network.ErrorMessage
+import com.multimodal.capture.network.CommandProtocol
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import timber.log.Timber
@@ -122,6 +123,13 @@ class NetworkManager(private val context: Context) {
     private var syncEventCallback: ((String, Map<String, Any>) -> Unit)? = null
     private var connectionStateCallback: ((Boolean, String) -> Unit)? = null
     
+    // Real-time data streaming components
+    private var dataStreamingSocket: DatagramSocket? = null
+    private var pcAddress: InetAddress? = null
+    private val dataStreamingPort = 8890 // Port for PC to listen on
+    private val isDataStreamingEnabled = AtomicBoolean(false)
+    private var streamingJob: Job? = null
+    
     init {
         Timber.d("NetworkManager initialized")
         isDiscoveryActive.set(true)
@@ -134,16 +142,36 @@ class NetworkManager(private val context: Context) {
      */
     private fun startDiscoveryService() {
         discoveryJob = CoroutineScope(Dispatchers.IO).launch {
+            var retryCount = 0
+            var discoverySocket: DatagramSocket? = null
+            
+            while (retryCount < maxRetryAttempts && discoverySocket == null) {
+                try {
+                    discoverySocket = DatagramSocket(discoveryPort).apply {
+                        reuseAddress = true
+                        soTimeout = 5000 // 5 second timeout to allow graceful shutdown
+                    }
+                    Timber.d("Discovery service started on port $discoveryPort")
+                    
+                } catch (e: BindException) {
+                    retryCount++
+                    Timber.w("Discovery port $discoveryPort in use, retry $retryCount/$maxRetryAttempts")
+                    if (retryCount < maxRetryAttempts) {
+                        delay(baseRetryDelay * retryCount)
+                    } else {
+                        Timber.e(e, "Failed to start discovery service after $maxRetryAttempts attempts")
+                        return@launch
+                    }
+                }
+            }
+            
             try {
-                val discoverySocket = DatagramSocket(discoveryPort)
                 val buffer = ByteArray(1024)
                 val packet = DatagramPacket(buffer, buffer.size)
                 
-                Timber.d("Discovery service started on port $discoveryPort")
-                
                 while (isDiscoveryActive.get()) {
                     try {
-                        discoverySocket.receive(packet)
+                        discoverySocket!!.receive(packet)
                         val message = String(packet.data, 0, packet.length)
                         
                         if (message == "DISCOVER_ANDROID_CAPTURE") {
@@ -156,19 +184,29 @@ class NetworkManager(private val context: Context) {
                                 packet.address, 
                                 packet.port
                             )
-                            discoverySocket.send(responsePacket)
+                            discoverySocket!!.send(responsePacket)
                             
                             Timber.d("Responded to discovery from ${packet.address}")
                         }
                         
                     } catch (e: Exception) {
-                        if (e !is CancellationException) {
-                            Timber.e(e, "Error in discovery service")
+                        when {
+                            e is CancellationException -> {
+                                // Expected when coroutine is cancelled
+                                break
+                            }
+                            e is SocketTimeoutException -> {
+                                // Expected timeout - no need to log as error, just continue listening
+                                continue
+                            }
+                            else -> {
+                                Timber.e(e, "Error in discovery service")
+                            }
                         }
                     }
                 }
                 
-                discoverySocket.close()
+                discoverySocket?.close()
                 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to start discovery service")
@@ -196,15 +234,39 @@ class NetworkManager(private val context: Context) {
      */
     private fun startServer() {
         serverJob = CoroutineScope(Dispatchers.IO).launch {
+            var retryCount = 0
+            var serverStarted = false
+            
+            while (retryCount < maxRetryAttempts && !serverStarted) {
+                try {
+                    // Update connection type when starting server
+                    updateConnectionType()
+                    
+                    serverSocket = ServerSocket().apply {
+                        reuseAddress = true
+                        soTimeout = 5000 // 5 second timeout for accept operations
+                        bind(InetSocketAddress(serverPort))
+                    }
+                    isListening.set(true)
+                    updateStatus("Listening for PC connection... (Connection: $currentConnectionType)")
+                    
+                    Timber.d("Server started on port $serverPort (Connection: $currentConnectionType)")
+                    serverStarted = true
+                    
+                } catch (e: BindException) {
+                    retryCount++
+                    Timber.w("Server port $serverPort in use, retry $retryCount/$maxRetryAttempts")
+                    if (retryCount < maxRetryAttempts) {
+                        delay(baseRetryDelay * retryCount)
+                    } else {
+                        Timber.e(e, "Failed to start server after $maxRetryAttempts attempts")
+                        updateStatus("Network Error: Unable to bind to port $serverPort")
+                        return@launch
+                    }
+                }
+            }
+            
             try {
-                // Update connection type when starting server
-                updateConnectionType()
-                
-                serverSocket = ServerSocket(serverPort)
-                isListening.set(true)
-                updateStatus("Listening for PC connection... (Connection: $currentConnectionType)")
-                
-                Timber.d("Server started on port $serverPort (Connection: $currentConnectionType)")
                 
                 while (isListening.get()) {
                     try {
@@ -216,6 +278,9 @@ class NetworkManager(private val context: Context) {
                         if (isListening.get()) {
                             Timber.e(e, "Server socket error")
                         }
+                    } catch (e: SocketTimeoutException) {
+                        // Expected timeout - no need to log as error, just continue listening
+                        continue
                     } catch (e: Exception) {
                         Timber.e(e, "Error accepting client connection")
                     }
@@ -2080,7 +2145,87 @@ class NetworkManager(private val context: Context) {
     }
 
     /**
-     * Enhanced cleanup with retry job cancellation
+     * Connect to PC for data streaming
+     */
+    fun connectToPC(ipAddress: String) {
+        try {
+            pcAddress = InetAddress.getByName(ipAddress)
+            dataStreamingSocket = DatagramSocket()
+            isDataStreamingEnabled.set(true)
+            Timber.i("NetworkManager connected to PC at $ipAddress for data streaming")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to setup data streaming connection to PC")
+            isDataStreamingEnabled.set(false)
+        }
+    }
+    
+    /**
+     * Send a real-time data packet to the connected PC over UDP
+     */
+    fun sendDataPacket(packet: CommandProtocol.DataPacket) {
+        if (!isDataStreamingEnabled.get()) {
+            return
+        }
+        
+        val socket = dataStreamingSocket ?: return
+        val address = pcAddress ?: return
+        
+        // Send data packet in background to avoid blocking
+        streamingJob = CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val jsonData = CommandProtocol.toJson(packet)
+                val buffer = jsonData.toByteArray()
+                val datagramPacket = DatagramPacket(buffer, buffer.size, address, dataStreamingPort)
+                socket.send(datagramPacket)
+                
+                // Update network metrics
+                networkMetrics["last_data_packet_sent"] = System.currentTimeMillis()
+                networkMetrics["total_packets_sent"] = (networkMetrics["total_packets_sent"] as? Long ?: 0L) + 1
+                
+            } catch (e: Exception) {
+                // Avoid spamming logs for streaming errors, but log occasionally
+                if (System.currentTimeMillis() % 10000 < 100) { // Log roughly every 10 seconds
+                    Timber.w(e, "Error sending data packet to PC")
+                }
+            }
+        }
+    }
+    
+    /**
+     * Enable or disable data streaming
+     */
+    fun setDataStreamingEnabled(enabled: Boolean) {
+        isDataStreamingEnabled.set(enabled)
+        if (enabled) {
+            Timber.d("Data streaming enabled")
+        } else {
+            Timber.d("Data streaming disabled")
+        }
+    }
+    
+    /**
+     * Check if data streaming is enabled and connected
+     */
+    fun isDataStreamingActive(): Boolean {
+        return isDataStreamingEnabled.get() && pcAddress != null && dataStreamingSocket != null
+    }
+    
+    /**
+     * Get data streaming statistics
+     */
+    fun getDataStreamingStats(): Map<String, Any> {
+        return mapOf(
+            "enabled" to isDataStreamingEnabled.get(),
+            "connected" to (pcAddress != null),
+            "pc_address" to (pcAddress?.hostAddress ?: "none"),
+            "streaming_port" to dataStreamingPort,
+            "last_packet_sent" to (networkMetrics["last_data_packet_sent"] ?: 0L),
+            "total_packets_sent" to (networkMetrics["total_packets_sent"] ?: 0L)
+        )
+    }
+
+    /**
+     * Enhanced cleanup with retry job cancellation and data streaming cleanup
      */
     fun cleanup() {
         try {
@@ -2098,6 +2243,13 @@ class NetworkManager(private val context: Context) {
             messageHandlerJob?.cancel()
             heartbeatJob?.cancel()
             retryJob?.cancel()
+            streamingJob?.cancel()
+            
+            // Cleanup data streaming
+            isDataStreamingEnabled.set(false)
+            dataStreamingSocket?.close()
+            dataStreamingSocket = null
+            pcAddress = null
             
             // Clear collections
             syncEventQueue.clear()

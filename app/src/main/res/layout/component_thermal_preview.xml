@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:background="@drawable/bg_thermal_preview"
+    app:layout_constraintDimensionRatio="192:256">
+
+    <!-- Thermal Image View -->
+    <ImageView
+        android:id="@+id/thermal_image_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Thermal camera preview"
+        android:background="@color/secondary_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:src="@drawable/ic_camera" />
+
+    <!-- Temperature Overlay Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/temperature_overlay_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_temperature_overlay"
+        android:padding="8dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <!-- Center Temperature -->
+        <TextView
+            android:id="@+id/text_center_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="25.6°C"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:drawableStart="@drawable/ic_crosshair"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/text_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="25.6°C" />
+
+        <!-- Max Temperature -->
+        <TextView
+            android:id="@+id/text_max_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="MAX: 28.3°C"
+            android:textColor="@color/error_color"
+            android:textSize="12sp"
+            android:drawableStart="@drawable/ic_arrow_upward"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/error_color"
+            app:layout_constraintStart_toEndOf="@id/text_center_temperature"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="MAX: 28.3°C" />
+
+        <!-- Min Temperature -->
+        <TextView
+            android:id="@+id/text_min_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="MIN: 22.1°C"
+            android:textColor="@color/accent_primary"
+            android:textSize="12sp"
+            android:drawableStart="@drawable/ic_arrow_downward"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/accent_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_center_temperature"
+            tools:text="MIN: 22.1°C" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Thermal Controls Overlay -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/thermal_controls_overlay"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_thermal_controls"
+        android:padding="8dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible">
+
+        <!-- Palette Selection -->
+        <TextView
+            android:id="@+id/text_palette_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Palette:"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatSpinner
+            android:id="@+id/spinner_palette"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_spinner"
+            app:layout_constraintStart_toEndOf="@id/text_palette_label"
+            app:layout_constraintEnd_toStartOf="@id/btn_temperature_toggle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Temperature Display Toggle -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_temperature_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:text="TEMP"
+            android:textSize="10sp"
+            app:backgroundTint="@color/accent_primary"
+            app:cornerRadius="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Crosshair Center Point -->
+    <View
+        android:id="@+id/crosshair_center"
+        android:layout_width="2dp"
+        android:layout_height="2dp"
+        android:background="@color/text_primary"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+    <!-- Crosshair Horizontal Line -->
+    <View
+        android:id="@+id/crosshair_horizontal"
+        android:layout_width="20dp"
+        android:layout_height="1dp"
+        android:background="@color/text_primary"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+    <!-- Crosshair Vertical Line -->
+    <View
+        android:id="@+id/crosshair_vertical"
+        android:layout_width="1dp"
+        android:layout_height="20dp"
+        android:background="@color/text_primary"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

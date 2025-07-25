@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/splash_background"
+    tools:context=".ui.SplashActivity">
+
+    <!-- Main title -->
+    <TextView
+        android:id="@+id/tv_main_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/splash_main_title"
+        android:textSize="28sp"
+        android:textColor="@color/splash_text_primary"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintVertical_bias="0.35"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/tv_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/splash_subtitle"
+        android:textSize="16sp"
+        android:textColor="@color/splash_text_secondary"
+        android:textStyle="italic"
+        android:fontFamily="sans-serif-light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_main_title" />
+
+    <!-- Feature highlights -->
+    <LinearLayout
+        android:id="@+id/ll_features"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_subtitle">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• Thermal Camera Integration"
+            android:textSize="14sp"
+            android:textColor="@color/splash_text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• GSR Sensor Monitoring"
+            android:textSize="14sp"
+            android:textColor="@color/splash_text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• Multi-Modal Data Capture"
+            android:textSize="14sp"
+            android:textColor="@color/splash_text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• Real-Time Synchronization"
+            android:textSize="14sp"
+            android:textColor="@color/splash_text_secondary" />
+
+    </LinearLayout>
+
+    <!-- App logo and name at bottom -->
+    <ImageView
+        android:id="@+id/iv_app_logo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/ic_launcher"
+        android:contentDescription="@string/app_logo_description"
+        app:layout_constraintWidth_percent="0.15"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintVertical_bias="0.85"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/tv_app_name"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_app_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/app_name"
+        android:textSize="20sp"
+        android:textColor="@color/splash_text_primary"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintStart_toEndOf="@id/iv_app_logo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/iv_app_logo"
+        app:layout_constraintBottom_toBottomOf="@id/iv_app_logo" />
+
+    <!-- Loading indicator -->
+    <ProgressBar
+        android:id="@+id/pb_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:indeterminateTint="@color/splash_accent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_app_logo" />
+
+    <!-- Version info -->
+    <TextView
+        android:id="@+id/tv_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="@string/splash_version_info"
+        android:textSize="12sp"
+        android:textColor="@color/splash_text_tertiary"
+        android:fontFamily="sans-serif-light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

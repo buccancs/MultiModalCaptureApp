@@ -41,6 +41,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_app_title" />
 
+    <!-- Preview Mode Toggle Button -->
+    <Button
+        android:id="@+id/btn_preview_mode_toggle"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:backgroundTint="@color/teal_700"
+        android:text="@string/preview_mode_rgb"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:drawableStart="@drawable/ic_switch_camera"
+        android:drawablePadding="8dp"
+        android:drawableTint="@color/white"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_camera_preview" />
+
     <!-- Status Panel -->
     <LinearLayout
         android:id="@+id/status_panel"
@@ -52,7 +72,7 @@
         android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_camera_preview">
+        app:layout_constraintTop_toBottomOf="@id/btn_preview_mode_toggle">
 
         <!-- Status Row 1 -->
         <LinearLayout
@@ -168,6 +188,24 @@
                 android:layout_marginEnd="16dp"
                 android:text="@string/bluetooth_scan"
                 android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_view_sessions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="View Sessions"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_gsr_graph"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="GSR Graph"
+                android:textSize="14sp"
+                android:drawableStart="@drawable/ic_sensor"
+                android:drawablePadding="8dp" />
 
             <Button
                 android:id="@+id/btn_settings"

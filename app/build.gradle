@@ -1,40 +1,68 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
-    namespace 'com.multimodal.capture'
-    compileSdk 34
+    namespace = 'com.multimodal.capture'
+    compileSdk = 34
 
     defaultConfig {
         applicationId "com.multimodal.capture"
-        minSdk 24
-        targetSdk 34
+        minSdk = 24
+        targetSdk = 34
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            // For production, these should be stored securely (e.g., in keystore.properties)
+            // storeFile file('path/to/keystore.jks')
+            // storePassword 'store_password'
+            // keyAlias 'key_alias'
+            // keyPassword 'key_password'
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            debuggable true
+            applicationIdSuffix ".debug"
         }
     }
     
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
+    }
+    
+    // Specify Java toolchain to use Java 17
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
     
     buildFeatures {
-        viewBinding true
+        viewBinding = true
+        buildConfig = true
     }
     
     packagingOptions {
@@ -44,7 +72,7 @@ android {
         pickFirst '**/liblsl64.so'
     }
     
-    ndkVersion "25.1.8937393"
+    ndkVersion = "25.1.8937393"
 }
 
 
@@ -98,16 +126,28 @@ dependencies {
     implementation(name: 'shimmerandroidinstrumentdriver-3.2.3_beta', ext: 'aar')
     implementation fileTree(dir: 'src/main/libs', include: ['*.jar'])
     
-    // Topdon Thermal Camera SDK
-    implementation(name: 'topdon_1.3.7', ext: 'aar')
+    // Topdon Thermal Camera SDK - Updated from IRCamera
+    implementation(name: 'libusbdualsdk_1.3.4_2406271906_standard', ext: 'aar')
+    implementation(name: 'opengl_1.3.2_standard', ext: 'aar')
+    implementation(name: 'suplib-release', ext: 'aar')
     
     // LSL (Lab Streaming Layer) - using JitPack repository
     // implementation 'com.github.labstreaminglayer:liblsl-Java:1.16.2' // Temporarily disabled for Topdon integration testing
     
     // Testing
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testImplementation 'org.robolectric:robolectric:4.11.1'
+    testImplementation 'androidx.test:core:1.5.0'
+    testImplementation 'androidx.test.ext:junit:1.1.5'
+    
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
     
     // Logging
     implementation 'com.jakewharton.timber:timber:5.0.1'
@@ -120,4 +160,15 @@ dependencies {
     
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.2.1'
+    
+    // Charting library for GSR data visualization
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    
+    // Lottie animation library for smooth animations and loading states
+    implementation 'com.airbnb.android:lottie:6.1.0'
+    
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }

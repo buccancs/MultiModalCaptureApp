@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ui.GSRGraphActivity">
+
+    <!-- Header Section -->
+    <LinearLayout
+        android:id="@+id/layoutHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@color/design_default_color_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GSR Data Visualization"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerTimeRange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:entries="@array/time_range_entries"
+            android:background="@color/white"
+            android:minWidth="120dp" />
+
+    </LinearLayout>
+
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:id="@+id/layoutControls"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/layoutHeader"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonRefresh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Refresh"
+            android:icon="@drawable/ic_refresh"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonExport"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Export"
+            android:icon="@drawable/ic_export"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    </LinearLayout>
+
+    <!-- Status and Progress -->
+    <LinearLayout
+        android:id="@+id/layoutStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toBottomOf="@id/layoutControls"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/textStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Ready to load GSR data"
+            android:textSize="14sp"
+            android:textColor="@color/design_default_color_on_surface" />
+
+    </LinearLayout>
+
+    <!-- GSR Chart -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chartGsr"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutStatus"
+        app:layout_constraintBottom_toTopOf="@id/layoutStatistics"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_weight="1" />
+
+    <!-- Statistics Section -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layoutStatistics"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Statistics"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/design_default_color_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textStatistics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No data loaded"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:textColor="@color/design_default_color_on_surface" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

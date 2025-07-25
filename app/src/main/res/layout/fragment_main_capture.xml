@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary_background">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/title_main_capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/main_capture"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Preview Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/preview_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_device_item"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_main_capture"
+        app:layout_constraintBottom_toTopOf="@id/controls_container">
+
+        <!-- Camera Preview -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/camera_preview"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Thermal Preview -->
+        <com.multimodal.capture.ui.components.ThermalPreviewView
+            android:id="@+id/thermal_preview"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Preview Mode Toggle Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_toggle_preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_switch_camera"
+            android:contentDescription="Toggle preview mode"
+            app:backgroundTint="@color/accent_primary"
+            app:tint="@color/text_primary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Recording Status Indicator -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/recording_status_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/bg_device_item"
+            android:padding="8dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible">
+
+            <!-- Lottie Recording Animation -->
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/recording_animation"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                app:lottie_rawRes="@raw/recording_pulse"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <TextView
+                android:id="@+id/text_recording_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="REC"
+                android:textColor="@color/recording_active"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/recording_animation"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Controls Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/controls_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/status_container">
+
+        <!-- Record Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_record"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="@string/start_recording"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/recording_active"
+            app:cornerRadius="28dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Preview Mode Text -->
+        <TextView
+            android:id="@+id/text_preview_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/preview_mode_rgb"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_record" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Status Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/status_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_device_item"
+        android:padding="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Status Grid -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!-- Camera Status -->
+            <com.multimodal.capture.ui.components.StatusIndicatorView
+                android:id="@+id/status_camera"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- Thermal Status -->
+            <com.multimodal.capture.ui.components.StatusIndicatorView
+                android:id="@+id/status_thermal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+            <!-- GSR Status -->
+            <com.multimodal.capture.ui.components.StatusIndicatorView
+                android:id="@+id/status_gsr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
