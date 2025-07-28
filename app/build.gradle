@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
 }
@@ -111,6 +113,12 @@ dependencies {
     // ViewModel and LiveData
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
+    
+    // Hilt Dependency Injection
+    implementation 'com.google.dagger:hilt-android:2.48'
+    kapt 'com.google.dagger:hilt-compiler:2.48'
+    implementation 'androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03'
+    kapt 'androidx.hilt:hilt-compiler:1.1.0'
     
     // File I/O and CSV handling
     implementation 'com.opencsv:opencsv:5.8'

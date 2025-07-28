@@ -11,7 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import com.multimodal.capture.BuildConfig
-import com.multimodal.capture.network.CommandProtocol
+import com.multimodal.capture.data.network.CommandProtocol
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.IOException
@@ -221,7 +221,7 @@ class NetworkService : Service() {
         return when (command) {
             is CommandProtocol.Command.StartRecording -> {
                 val sessionId = command.sessionId ?: "session_${System.currentTimeMillis()}"
-                val success = recordingService!!.startRecording(sessionId, System.currentTimeMillis())
+                val success = recordingService!!.startRecordingSession(sessionId, System.currentTimeMillis())
                 if (success) {
                     CommandProtocol.Response.Acknowledgment("START_RECORDING", "Recording started with session: $sessionId")
                 } else {
@@ -229,7 +229,7 @@ class NetworkService : Service() {
                 }
             }
             is CommandProtocol.Command.StopRecording -> {
-                val success = recordingService!!.stopRecording()
+                val success = recordingService!!.stopRecordingSession()
                 if (success) {
                     CommandProtocol.Response.Acknowledgment("STOP_RECORDING", "Recording stopped successfully.")
                 } else {

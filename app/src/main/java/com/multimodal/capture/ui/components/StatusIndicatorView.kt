@@ -17,9 +17,11 @@ class StatusIndicatorView @JvmOverloads constructor(
     private val binding: ComponentStatusIndicatorBinding
 
     enum class Status {
-        CONNECTED,
         DISCONNECTED,
         CONNECTING,
+        READY,
+        STREAMING,
+        ERROR,
         DISABLED
     }
 
@@ -32,9 +34,11 @@ class StatusIndicatorView @JvmOverloads constructor(
         binding.statusIcon.setImageResource(iconResId)
 
         val colorRes = when (status) {
-            Status.CONNECTED -> R.color.device_connected
             Status.DISCONNECTED -> R.color.device_disconnected
             Status.CONNECTING -> R.color.device_connecting
+            Status.READY -> R.color.device_connected
+            Status.STREAMING -> R.color.recording_active
+            Status.ERROR -> R.color.error_color
             Status.DISABLED -> R.color.text_disabled
         }
         val color = ContextCompat.getColor(context, colorRes)

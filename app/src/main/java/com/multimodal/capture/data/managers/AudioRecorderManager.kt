@@ -1,4 +1,4 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.Manifest
 import android.content.Context
@@ -26,7 +26,7 @@ import kotlinx.coroutines.*
  */
 class AudioRecorderManager(
     private val context: Context,
-    private val networkManager: com.multimodal.capture.network.NetworkManager? = null
+    private val networkManager: com.multimodal.capture.data.network.NetworkManager? = null
 ) {
     
     private val timestampManager = TimestampManager()

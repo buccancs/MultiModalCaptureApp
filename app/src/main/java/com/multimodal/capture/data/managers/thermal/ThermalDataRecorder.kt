@@ -1,4 +1,4 @@
-package com.multimodal.capture.capture.thermal
+package com.multimodal.capture.data.managers.thermal
 
 import timber.log.Timber
 import java.io.File

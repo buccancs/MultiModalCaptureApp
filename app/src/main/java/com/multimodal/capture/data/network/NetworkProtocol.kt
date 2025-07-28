@@ -1,4 +1,4 @@
-package com.multimodal.capture.network
+package com.multimodal.capture.data.network
 
 /**
  * Network Protocol Constants and Message Definitions

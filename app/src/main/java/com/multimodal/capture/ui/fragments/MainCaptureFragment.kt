@@ -17,7 +17,7 @@ import com.multimodal.capture.R
 import com.multimodal.capture.ui.PreviewActivity
 import com.multimodal.capture.ui.components.ThermalPreviewView
 import com.multimodal.capture.ui.components.StatusIndicatorView
-import com.multimodal.capture.viewmodel.MainViewModel
+import com.multimodal.capture.ui.viewmodel.MainViewModel
 import timber.log.Timber
 
 /**
@@ -111,7 +111,11 @@ class MainCaptureFragment : Fragment() {
         viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
             if (error.isNotEmpty()) {
                 Timber.e("[DEBUG_LOG] Error: $error")
-                // TODO: Show error to user (could add Snackbar or Toast)
+                com.google.android.material.snackbar.Snackbar.make(
+                    requireView(),
+                    error,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -133,10 +137,50 @@ class MainCaptureFragment : Fragment() {
             // Stop recording
             viewModel.stopRecording()
         } else {
-            // Start recording
-            val sessionId = "session_${System.currentTimeMillis()}"
-            val startTimestamp = System.currentTimeMillis()
-            viewModel.startRecording(sessionId, startTimestamp)
+            // Pre-flight guard: Check sensor status before starting recording
+            val cameraStatus = viewModel.cameraStatus.value ?: ""
+            val thermalStatus = viewModel.thermalStatus.value ?: ""
+            val gsrStatus = viewModel.gsrStatus.value ?: ""
+            
+            val isCameraReady = cameraStatus.contains("ready", ignoreCase = true) || 
+                               cameraStatus.contains("connected", ignoreCase = true)
+            val isThermalReady = thermalStatus.contains("ready", ignoreCase = true) || 
+                                thermalStatus.contains("connected", ignoreCase = true)
+            val isGsrReady = gsrStatus.contains("ready", ignoreCase = true) || 
+                            gsrStatus.contains("connected", ignoreCase = true)
+            
+            when {
+                !isCameraReady -> {
+                    com.google.android.material.snackbar.Snackbar.make(
+                        requireView(),
+                        "Camera is not ready. Please ensure camera is connected and ready.",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    ).show()
+                    return
+                }
+                !isThermalReady -> {
+                    com.google.android.material.snackbar.Snackbar.make(
+                        requireView(),
+                        "Thermal camera is not ready. Please ensure thermal camera is connected.",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    ).show()
+                    return
+                }
+                !isGsrReady -> {
+                    com.google.android.material.snackbar.Snackbar.make(
+                        requireView(),
+                        "GSR sensor is not ready. Please ensure GSR sensor is connected.",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    ).show()
+                    return
+                }
+                else -> {
+                    // All sensors ready - start recording
+                    val sessionId = "session_${System.currentTimeMillis()}"
+                    val startTimestamp = System.currentTimeMillis()
+                    viewModel.startRecording(sessionId, startTimestamp)
+                }
+            }
         }
     }
     
@@ -173,39 +217,39 @@ class MainCaptureFragment : Fragment() {
     }
     
     private fun updateCameraStatus(status: String) {
-        val isConnected = status.contains("ready", ignoreCase = true) || 
-                         status.contains("connected", ignoreCase = true)
-        
-        val statusType = if (isConnected) {
-            StatusIndicatorView.Status.CONNECTED
-        } else {
-            StatusIndicatorView.Status.DISCONNECTED
+        val statusType = when {
+            status.contains("ready", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("connected", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("streaming", ignoreCase = true) -> StatusIndicatorView.Status.STREAMING
+            status.contains("error", ignoreCase = true) -> StatusIndicatorView.Status.ERROR
+            status.contains("connecting", ignoreCase = true) -> StatusIndicatorView.Status.CONNECTING
+            else -> StatusIndicatorView.Status.DISCONNECTED
         }
         
         statusCamera.setStatus(statusType, status, R.drawable.ic_camera)
     }
     
     private fun updateThermalStatus(status: String) {
-        val isConnected = status.contains("connected", ignoreCase = true) || 
-                         status.contains("ready", ignoreCase = true)
-        
-        val statusType = if (isConnected) {
-            StatusIndicatorView.Status.CONNECTED
-        } else {
-            StatusIndicatorView.Status.DISCONNECTED
+        val statusType = when {
+            status.contains("ready", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("connected", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("streaming", ignoreCase = true) -> StatusIndicatorView.Status.STREAMING
+            status.contains("error", ignoreCase = true) -> StatusIndicatorView.Status.ERROR
+            status.contains("connecting", ignoreCase = true) -> StatusIndicatorView.Status.CONNECTING
+            else -> StatusIndicatorView.Status.DISCONNECTED
         }
         
         statusThermal.setStatus(statusType, status, R.drawable.ic_thermal)
     }
     
     private fun updateGsrStatus(status: String) {
-        val isConnected = status.contains("connected", ignoreCase = true) || 
-                         status.contains("ready", ignoreCase = true)
-        
-        val statusType = if (isConnected) {
-            StatusIndicatorView.Status.CONNECTED
-        } else {
-            StatusIndicatorView.Status.DISCONNECTED
+        val statusType = when {
+            status.contains("ready", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("connected", ignoreCase = true) -> StatusIndicatorView.Status.READY
+            status.contains("streaming", ignoreCase = true) -> StatusIndicatorView.Status.STREAMING
+            status.contains("error", ignoreCase = true) -> StatusIndicatorView.Status.ERROR
+            status.contains("connecting", ignoreCase = true) -> StatusIndicatorView.Status.CONNECTING
+            else -> StatusIndicatorView.Status.DISCONNECTED
         }
         
         statusGsr.setStatus(statusType, status, R.drawable.ic_sensor)

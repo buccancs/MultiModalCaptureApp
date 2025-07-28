@@ -1,13 +1,17 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import com.multimodal.capture.data.GSRDataPoint
+import com.multimodal.capture.data.DeviceState
+import com.multimodal.capture.data.interfaces.IDataSource
 import com.multimodal.capture.utils.SettingsManager
-import com.multimodal.capture.network.NetworkManager
-import com.multimodal.capture.network.CommandProtocol
+import com.multimodal.capture.data.network.NetworkManager
+import com.multimodal.capture.data.network.CommandProtocol
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.File
@@ -32,7 +36,11 @@ import com.shimmerresearch.managers.bluetoothManager.ShimmerBluetoothManager
 class GSRSensorManager(
     private val context: Context,
     private val networkManager: NetworkManager? = null
-) {
+) : IDataSource {
+    
+    // IDataSource implementation - DeviceState LiveData
+    private val _status = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    override val status: LiveData<DeviceState> = _status
     
     // Callbacks
     private var statusCallback: ((String) -> Unit)? = null
@@ -73,6 +81,22 @@ class GSRSensorManager(
     init {
         Timber.d("GSRSensorManager initialized - initializing Shimmer SDK")
         initializeShimmerManager()
+    }
+    
+    // IDataSource interface implementation
+    override fun initialize() {
+        Timber.d("Initializing GSR data source")
+        initializeShimmerManager()
+        _status.postValue(DeviceState.READY)
+    }
+    
+    override fun getDataSourceName(): String = "GSR Sensor (Shimmer3 GSR+)"
+    
+    override fun isReady(): Boolean = isConnected
+    
+    override fun startRecording(sessionId: String, outputDirectory: File) {
+        // Delegate to existing startRecording method with timestamp
+        startRecording(sessionId, System.currentTimeMillis())
     }
     
     /**
@@ -281,7 +305,7 @@ class GSRSensorManager(
     /**
      * Check if GSR sensor is currently recording
      */
-    fun isRecording(): Boolean {
+    override fun isRecording(): Boolean {
         return isRecording
     }
     
@@ -527,7 +551,7 @@ class GSRSensorManager(
     /**
      * Stop recording GSR data
      */
-    fun stopRecording() {
+    override fun stopRecording() {
         try {
             Timber.d("Stopping GSR recording")
             
@@ -877,7 +901,7 @@ class GSRSensorManager(
     /**
      * Cleanup resources
      */
-    fun cleanup() {
+    override fun cleanup() {
         try {
             Timber.d("Cleaning up GSRSensorManager")
             

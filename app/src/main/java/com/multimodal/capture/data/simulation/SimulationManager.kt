@@ -1,4 +1,4 @@
-package com.multimodal.capture.simulation
+package com.multimodal.capture.data.simulation
 
 import android.content.Context
 import android.os.Handler

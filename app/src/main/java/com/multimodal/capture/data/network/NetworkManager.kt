@@ -1,4 +1,4 @@
-package com.multimodal.capture.network
+package com.multimodal.capture.data.network
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,14 +9,14 @@ import android.bluetooth.BluetoothManager
 import android.os.Handler
 import android.os.Looper
 import com.multimodal.capture.R
-import com.multimodal.capture.network.NetworkProtocol
-import com.multimodal.capture.network.EnhancedNetworkMessage
-import com.multimodal.capture.network.CommandMessage
-import com.multimodal.capture.network.StatusResponse
-import com.multimodal.capture.network.SyncPingMessage
-import com.multimodal.capture.network.SyncPongMessage
-import com.multimodal.capture.network.ErrorMessage
-import com.multimodal.capture.network.CommandProtocol
+import com.multimodal.capture.data.network.NetworkProtocol
+import com.multimodal.capture.data.network.EnhancedNetworkMessage
+import com.multimodal.capture.data.network.CommandMessage
+import com.multimodal.capture.data.network.StatusResponse
+import com.multimodal.capture.data.network.SyncPingMessage
+import com.multimodal.capture.data.network.SyncPongMessage
+import com.multimodal.capture.data.network.ErrorMessage
+import com.multimodal.capture.data.network.CommandProtocol
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import timber.log.Timber

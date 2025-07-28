@@ -1,4 +1,4 @@
-package com.multimodal.capture.thermal;
+package com.multimodal.capture.data.thermal;
 
 import android.os.Environment;
 

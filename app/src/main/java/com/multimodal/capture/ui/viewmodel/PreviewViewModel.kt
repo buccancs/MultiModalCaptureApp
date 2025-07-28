@@ -8,8 +8,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.multimodal.capture.capture.CameraManager
-import com.multimodal.capture.capture.ThermalCameraManager
+import com.multimodal.capture.data.managers.CameraManager
+import com.multimodal.capture.data.managers.ThermalCameraManager
 import com.multimodal.capture.utils.TimestampManager
 import kotlinx.coroutines.launch
 import timber.log.Timber

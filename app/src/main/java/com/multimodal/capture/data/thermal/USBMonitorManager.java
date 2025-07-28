@@ -1,4 +1,4 @@
-package com.multimodal.capture.thermal;
+package com.multimodal.capture.data.thermal;
 
 import android.hardware.usb.UsbDevice;
 import android.os.SystemClock;
@@ -15,8 +15,8 @@ import com.energy.iruvc.uvc.CameraSize;
 import com.energy.iruvc.uvc.ConcreateUVCBuilder;
 import com.energy.iruvc.uvc.UVCCamera;
 import com.energy.iruvc.uvc.UVCType;
-import com.multimodal.capture.thermal.Const;
-import com.multimodal.capture.thermal.OnUSBConnectListener;
+import com.multimodal.capture.data.thermal.Const;
+import com.multimodal.capture.data.thermal.OnUSBConnectListener;
 
 import java.util.ArrayList;
 import java.util.List;

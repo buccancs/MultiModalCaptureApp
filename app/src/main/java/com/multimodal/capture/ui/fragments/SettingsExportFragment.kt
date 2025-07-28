@@ -15,7 +15,7 @@ import com.multimodal.capture.export.DataExportManager
 import com.multimodal.capture.ui.GSRGraphActivity
 import com.multimodal.capture.ui.SessionFolderActivity
 import com.multimodal.capture.ui.SettingsActivity
-import com.multimodal.capture.viewmodel.MainViewModel
+import com.multimodal.capture.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

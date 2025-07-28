@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.multimodal.capture.R
 import com.multimodal.capture.ui.adapters.DeviceListAdapter
-import com.multimodal.capture.viewmodel.MainViewModel
+import com.multimodal.capture.ui.viewmodel.MainViewModel
 import timber.log.Timber
 
 /**

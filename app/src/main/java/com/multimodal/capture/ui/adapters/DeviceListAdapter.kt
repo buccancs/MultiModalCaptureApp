@@ -65,7 +65,7 @@ class DeviceListAdapter(
 
             // Set device status using StatusIndicatorView
             val statusType = if (device.isConnected) {
-                StatusIndicatorView.Status.CONNECTED
+                StatusIndicatorView.Status.READY
             } else {
                 StatusIndicatorView.Status.DISCONNECTED
             }

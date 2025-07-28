@@ -1,4 +1,4 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.content.Context
 import android.graphics.ImageFormat
@@ -14,10 +14,14 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.core.content.ContextCompat
+import com.multimodal.capture.data.DeviceState
+import com.multimodal.capture.data.interfaces.IDataSource
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.LifecycleOwner
 import com.multimodal.capture.R
 import com.multimodal.capture.utils.TimestampManager
-import com.multimodal.capture.network.NetworkManager
+import com.multimodal.capture.data.network.NetworkManager
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -52,10 +56,14 @@ class CameraManager(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
     private val networkManager: NetworkManager? = null
-) {
+) : IDataSource {
     
     private val timestampManager = TimestampManager()
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    
+    // IDataSource implementation - DeviceState LiveData
+    private val _status = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    override val status: LiveData<DeviceState> = _status
     
     // Camera components
     private var cameraProvider: ProcessCameraProvider? = null
@@ -86,6 +94,21 @@ class CameraManager(
     init {
         Timber.d("CameraManager initialized")
         initializeCamera()
+    }
+    
+    // IDataSource interface implementation
+    override fun initialize() {
+        initializeCamera()
+        _status.postValue(if (cameraProvider != null) DeviceState.READY else DeviceState.ERROR)
+    }
+    
+    override fun getDataSourceName(): String = "RGB Camera (CameraX)"
+    
+    override fun isReady(): Boolean = cameraProvider != null
+    
+    override fun startRecording(sessionId: String, outputDirectory: File) {
+        // Delegate to existing startRecording method with timestamp
+        startRecording(sessionId, System.currentTimeMillis())
     }
     
     /**
@@ -228,7 +251,7 @@ class CameraManager(
     /**
      * Stop video recording
      */
-    fun stopRecording() {
+    override fun stopRecording() {
         if (!isRecording.get()) {
             Timber.w("No recording in progress")
             return
@@ -551,7 +574,7 @@ class CameraManager(
     /**
      * Check if camera is recording
      */
-    fun isRecording(): Boolean {
+    override fun isRecording(): Boolean {
         return isRecording.get()
     }
     
@@ -814,7 +837,7 @@ class CameraManager(
     /**
      * Cleanup resources with enhanced memory management
      */
-    fun cleanup() {
+    override fun cleanup() {
         try {
             Timber.d("Starting CameraManager cleanup...")
             

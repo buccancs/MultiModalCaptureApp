@@ -1,8 +1,9 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.multimodal.capture.data.GSRDataPoint
+import com.multimodal.capture.data.managers.GSRSensorManager
 import com.shimmerresearch.android.Shimmer
 import com.shimmerresearch.driver.Configuration
 import com.shimmerresearch.driver.FormatCluster

@@ -19,7 +19,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.multimodal.capture.databinding.ActivityMainBinding
 import com.multimodal.capture.service.RecordingService
 import com.multimodal.capture.service.NetworkService
-import com.multimodal.capture.viewmodel.MainViewModel
+import com.multimodal.capture.ui.viewmodel.MainViewModel
 import com.multimodal.capture.utils.PermissionManager
 import com.multimodal.capture.utils.SettingsManager
 import com.multimodal.capture.utils.LoggingManager
@@ -27,12 +27,14 @@ import com.multimodal.capture.data.RecordingConfig
 import com.multimodal.capture.ui.BluetoothDeviceActivity
 import com.multimodal.capture.ui.adapters.MainPagerAdapter
 import com.multimodal.capture.ui.components.CustomBottomNavigationView
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 /**
  * Main activity for the Multi-Modal Capture application.
  * Handles UI interactions, permission requests, and coordinates between different capture modules.
  */
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), PermissionManager.PermissionCallback {
     
     private lateinit var binding: ActivityMainBinding

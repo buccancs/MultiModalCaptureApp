@@ -8,28 +8,51 @@ import android.os.IBinder
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LifecycleOwner
 import com.multimodal.capture.MainActivity
 import com.multimodal.capture.R
-import com.multimodal.capture.capture.CameraManager
-import com.multimodal.capture.capture.GSRSensorManager
-import com.multimodal.capture.capture.ThermalCameraManager
+import com.multimodal.capture.data.managers.CameraManager
+import com.multimodal.capture.data.managers.GSRSensorManager
+import com.multimodal.capture.data.managers.ThermalCameraManager
+import com.multimodal.capture.data.DeviceState
+import com.multimodal.capture.data.DeviceStateCallback
+import com.multimodal.capture.data.network.NetworkManager
+import com.multimodal.capture.data.interfaces.IDataSource
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * RecordingService handles background recording operations.
  * Runs as a foreground service to ensure continuous recording even when app is backgrounded.
+ * Acts as the central orchestrator for all hardware managers and device state management.
  */
-class RecordingService : Service() {
+class RecordingService : Service(), DeviceStateCallback {
     
     private val binder = RecordingBinder()
     private var isRecording = false
     private var currentSessionId: String = ""
     private var startTimestamp: Long = 0L
 
-    // Sensor Managers - The service now owns the managers
+    // Hardware Managers - The service owns all managers as single source of truth
+    private lateinit var cameraManager: CameraManager
     private lateinit var gsrSensorManager: GSRSensorManager
     private lateinit var thermalCameraManager: ThermalCameraManager
-    // private lateinit var cameraManager: CameraManager // Add if needed
+    private lateinit var networkManager: NetworkManager
+    
+    // IDataSource pattern - Unified interface for all data sources
+    private val dataSources = mutableListOf<IDataSource>()
+    
+    // Device State LiveData - Unified state machine for all devices
+    private val _cameraState = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    private val _thermalState = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    private val _gsrState = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    
+    val cameraState: LiveData<DeviceState> = _cameraState
+    val thermalState: LiveData<DeviceState> = _thermalState
+    val gsrState: LiveData<DeviceState> = _gsrState
     
     // Notification
     private val notificationId = 1001
@@ -51,10 +74,10 @@ class RecordingService : Service() {
             ACTION_START_RECORDING -> {
                 val sessionId = intent.getStringExtra(EXTRA_SESSION_ID) ?: "Unknown"
                 val timestamp = intent.getLongExtra(EXTRA_START_TIMESTAMP, SystemClock.elapsedRealtimeNanos())
-                startRecording(sessionId, timestamp)
+                startRecordingSession(sessionId, timestamp)
             }
             ACTION_STOP_RECORDING -> {
-                stopRecording()
+                stopRecordingSession()
             }
             ACTION_PAUSE_RECORDING -> {
                 pauseRecording()
@@ -72,23 +95,81 @@ class RecordingService : Service() {
     }
     
     /**
-     * Initialize all sensor managers that this service will control.
+     * DeviceStateCallback implementation - Central state management
      */
-    private fun initializeSensorManagers() {
-        gsrSensorManager = GSRSensorManager(this)
-        gsrSensorManager.setStatusCallback { status -> Timber.i("GSR Status: $status") }
-
-        thermalCameraManager = ThermalCameraManager(this)
-        thermalCameraManager.initialize()
-        thermalCameraManager.setStatusCallback { status -> Timber.i("Thermal Status: $status") }
-
-        Timber.d("Sensor managers initialized in RecordingService")
+    override fun onDeviceStateChanged(deviceType: String, newState: DeviceState, message: String) {
+        Timber.d("Device state changed: $deviceType -> $newState ($message)")
+        
+        when (deviceType.lowercase()) {
+            "camera" -> _cameraState.postValue(newState)
+            "thermal" -> _thermalState.postValue(newState)
+            "gsr" -> _gsrState.postValue(newState)
+            else -> Timber.w("Unknown device type: $deviceType")
+        }
     }
     
     /**
-     * Start recording session
+     * Initialize all sensor managers that this service will control.
+     * The service now owns all hardware managers as single source of truth.
      */
-    fun startRecording(sessionId: String, timestamp: Long): Boolean {
+    private fun initializeSensorManagers() {
+        try {
+            // Initialize NetworkManager first as other managers may depend on it
+            networkManager = NetworkManager(this)
+            
+            // Initialize GSR Sensor Manager with NetworkManager
+            gsrSensorManager = GSRSensorManager(this, networkManager)
+            gsrSensorManager.setStatusCallback { status -> 
+                // Convert status string to DeviceState and report
+                val deviceState = mapStatusToDeviceState(status)
+                onDeviceStateChanged("gsr", deviceState, status)
+            }
+
+            // Initialize Thermal Camera Manager with NetworkManager
+            thermalCameraManager = ThermalCameraManager(this, networkManager)
+            thermalCameraManager.initialize()
+            thermalCameraManager.setStatusCallback { status -> 
+                val deviceState = mapStatusToDeviceState(status)
+                onDeviceStateChanged("thermal", deviceState, status)
+            }
+
+            // Initialize Camera Manager with NetworkManager
+            // Note: CameraManager requires LifecycleOwner, will be set when bound to UI
+            // cameraManager will be initialized when needed through getCameraManager()
+
+            // Add managers to IDataSource list for unified interface
+            dataSources.add(gsrSensorManager)
+            dataSources.add(thermalCameraManager)
+            // CameraManager will be added when initialized with LifecycleOwner
+
+            Timber.d("All sensor managers initialized in RecordingService")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Error initializing sensor managers")
+        }
+    }
+    
+    /**
+     * Map status strings to DeviceState enum values
+     */
+    private fun mapStatusToDeviceState(status: String): DeviceState {
+        return when {
+            status.contains("disconnected", ignoreCase = true) -> DeviceState.DISCONNECTED
+            status.contains("permission", ignoreCase = true) -> DeviceState.PERMISSION_REQUIRED
+            status.contains("connecting", ignoreCase = true) -> DeviceState.CONNECTING
+            status.contains("ready", ignoreCase = true) -> DeviceState.READY
+            status.contains("connected", ignoreCase = true) -> DeviceState.READY
+            status.contains("streaming", ignoreCase = true) -> DeviceState.STREAMING
+            status.contains("recording", ignoreCase = true) -> DeviceState.STREAMING
+            status.contains("error", ignoreCase = true) -> DeviceState.ERROR
+            else -> DeviceState.DISCONNECTED
+        }
+    }
+    
+    /**
+     * Start recording session - Central orchestrator for all hardware managers
+     */
+    fun startRecordingSession(sessionId: String, timestamp: Long): Boolean {
         if (isRecording) {
             Timber.w("Recording already in progress")
             return false
@@ -103,12 +184,20 @@ class RecordingService : Service() {
             val notification = createRecordingNotification(sessionId)
             startForeground(notificationId, notification)
             
-            // Start recording on all relevant managers
+            // Start recording on all data sources in synchronized manner
             val outputDir = getExternalFilesDir("sessions/$sessionId")!!
-            gsrSensorManager.startRecording(sessionId, timestamp)
-            thermalCameraManager.startRecording(sessionId, outputDir)
+            
+            // Use IDataSource pattern to start recording on all data sources
+            dataSources.forEach { dataSource ->
+                try {
+                    dataSource.startRecording(sessionId, outputDir)
+                    Timber.d("Started recording for data source: ${dataSource.getDataSourceName()}")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to start recording for data source: ${dataSource.getDataSourceName()}")
+                }
+            }
 
-            Timber.d("Recording service started for session: $sessionId")
+            Timber.d("Recording session started for: $sessionId")
             
             // Broadcast recording started
             val broadcastIntent = Intent(BROADCAST_RECORDING_STATE_CHANGED).apply {
@@ -127,9 +216,9 @@ class RecordingService : Service() {
     }
     
     /**
-     * Stop recording session
+     * Stop recording session - Central orchestrator for all hardware managers
      */
-    fun stopRecording(): Boolean {
+    fun stopRecordingSession(): Boolean {
         if (!isRecording) {
             Timber.w("No recording in progress")
             return false
@@ -141,11 +230,17 @@ class RecordingService : Service() {
             // Stop foreground service
             stopForeground(true)
 
-            // Stop recording on all managers
-            gsrSensorManager.stopRecording()
-            thermalCameraManager.stopRecording()
+            // Stop recording on all data sources in synchronized manner
+            dataSources.forEach { dataSource ->
+                try {
+                    dataSource.stopRecording()
+                    Timber.d("Stopped recording for data source: ${dataSource.getDataSourceName()}")
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to stop recording for data source: ${dataSource.getDataSourceName()}")
+                }
+            }
             
-            Timber.d("Recording service stopped for session: $currentSessionId")
+            Timber.d("Recording session stopped for: $currentSessionId")
             
             // Broadcast recording stopped
             val broadcastIntent = Intent(BROADCAST_RECORDING_STATE_CHANGED).apply {
@@ -372,17 +467,55 @@ class RecordingService : Service() {
     fun getThermalManager(): ThermalCameraManager {
         return thermalCameraManager
     }
+    
+    /**
+     * Get CameraManager instance - Initialize if needed with LifecycleOwner
+     */
+    fun getCameraManager(lifecycleOwner: LifecycleOwner? = null): CameraManager? {
+        return if (::cameraManager.isInitialized) {
+            cameraManager
+        } else if (lifecycleOwner != null) {
+            // Initialize CameraManager when LifecycleOwner is available
+            cameraManager = CameraManager(this, lifecycleOwner, networkManager)
+            cameraManager.setStatusCallback { status -> 
+                val deviceState = mapStatusToDeviceState(status)
+                onDeviceStateChanged("camera", deviceState, status)
+            }
+            
+            // Add to dataSources list for unified interface
+            dataSources.add(cameraManager)
+            
+            cameraManager
+        } else {
+            null
+        }
+    }
+    
+    /**
+     * Get NetworkManager instance
+     */
+    fun getNetworkManager(): NetworkManager {
+        return networkManager
+    }
 
     override fun onDestroy() {
         super.onDestroy()
         
         if (isRecording) {
-            stopRecording()
+            stopRecordingSession()
         }
         
-        // Clean up sensor managers
-        gsrSensorManager.cleanup()
-        thermalCameraManager.cleanup()
+        // Clean up all data sources using IDataSource pattern
+        dataSources.forEach { dataSource ->
+            try {
+                dataSource.cleanup()
+                Timber.d("Cleaned up data source: ${dataSource.getDataSourceName()}")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to cleanup data source: ${dataSource.getDataSourceName()}")
+            }
+        }
+        dataSources.clear()
+        
         Timber.d("RecordingService destroyed")
     }
     

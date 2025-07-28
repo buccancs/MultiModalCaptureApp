@@ -1,20 +1,24 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.hardware.usb.UsbDevice
-import com.multimodal.capture.capture.thermal.ThermalDataRecorder
+import com.multimodal.capture.data.managers.thermal.ThermalDataRecorder
 import android.os.Handler
 import android.os.Looper
 import android.widget.ImageView
 import com.multimodal.capture.utils.TimestampManager
-import com.multimodal.capture.network.NetworkManager
-import com.multimodal.capture.network.CommandProtocol
-import com.multimodal.capture.thermal.USBMonitorManager
-import com.multimodal.capture.thermal.ThermalDataParser
-import com.multimodal.capture.thermal.OnUSBConnectListener
-import com.multimodal.capture.thermal.Const
+import com.multimodal.capture.data.network.NetworkManager
+import com.multimodal.capture.data.network.CommandProtocol
+import com.multimodal.capture.data.thermal.USBMonitorManager
+import com.multimodal.capture.data.thermal.ThermalDataParser
+import com.multimodal.capture.data.thermal.OnUSBConnectListener
+import com.multimodal.capture.data.thermal.Const
 import com.multimodal.capture.ui.components.ThermalPreviewView
+import com.multimodal.capture.data.DeviceState
+import com.multimodal.capture.data.interfaces.IDataSource
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.energy.iruvc.ircmd.IRCMD
 import com.energy.iruvc.usb.USBMonitor
 import com.energy.iruvc.utils.CommonParams
@@ -31,8 +35,8 @@ import kotlinx.coroutines.*
  */
 class ThermalCameraManager(
     private val context: Context,
-    private val networkManager: com.multimodal.capture.network.NetworkManager? = null
-) : OnUSBConnectListener {
+    private val networkManager: com.multimodal.capture.data.network.NetworkManager? = null
+) : OnUSBConnectListener, IDataSource {
 
     private val timestampManager = TimestampManager()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -47,6 +51,10 @@ class ThermalCameraManager(
     // Recording state
     private val isConnected = AtomicBoolean(false)
     private var currentSessionId: String = ""
+    
+    // IDataSource implementation - DeviceState LiveData
+    private val _status = MutableLiveData<DeviceState>(DeviceState.DISCONNECTED)
+    override val status: LiveData<DeviceState> = _status
     
     // Connection status for UI indicators
     enum class ConnectionStatus {
@@ -72,12 +80,17 @@ class ThermalCameraManager(
         Timber.d("[DEBUG_LOG] ThermalCameraManager initialized")
         updateConnectionStatus(ConnectionStatus.DISCONNECTED, "Thermal camera disconnected")
     }
+    
+    // IDataSource interface implementation
+    override fun getDataSourceName(): String = "Thermal Camera (Topdon TC001)"
+    
+    override fun isReady(): Boolean = isConnected.get()
 
     /**
      * Initialize thermal camera system
      */
-    fun initialize(): Boolean {
-        return try {
+    override fun initialize() {
+        try {
             Timber.d("[DEBUG_LOG] Initializing thermal camera system...")
             
             // Add this manager as USB connect listener
@@ -95,12 +108,12 @@ class ThermalCameraManager(
             usbMonitorManager.registerUSB()
             
             updateStatus("Thermal camera system initialized")
+            _status.postValue(DeviceState.READY)
             Timber.d("[DEBUG_LOG] Thermal camera system initialized successfully")
-            true
         } catch (e: Exception) {
             Timber.e(e, "[DEBUG_LOG] Failed to initialize thermal camera: ${e.message}")
             updateStatus("Failed to initialize thermal camera: ${e.message}")
-            false
+            _status.postValue(DeviceState.ERROR)
         }
     }
 
@@ -108,13 +121,21 @@ class ThermalCameraManager(
      * Connect to thermal camera (backward compatibility method)
      */
     fun connectToThermalCamera(): Boolean {
-        return initialize()
+        initialize()
+        return isReady()
     }
 
     /**
-     * Start recording thermal data
+     * Start recording thermal data (IDataSource interface implementation)
      */
-    fun startRecording(sessionId: String, outputDirectory: File): Boolean {
+    override fun startRecording(sessionId: String, outputDirectory: File) {
+        startRecordingInternal(sessionId, outputDirectory)
+    }
+    
+    /**
+     * Start recording thermal data (internal implementation)
+     */
+    private fun startRecordingInternal(sessionId: String, outputDirectory: File): Boolean {
         if (dataRecorder.isRecording) {
             Timber.w("[DEBUG_LOG] Recording already in progress")
             return false
@@ -144,9 +165,16 @@ class ThermalCameraManager(
     }
 
     /**
-     * Stop recording thermal data
+     * Stop recording thermal data (IDataSource interface implementation)
      */
-    fun stopRecording(): Boolean {
+    override fun stopRecording() {
+        stopRecordingInternal()
+    }
+    
+    /**
+     * Stop recording thermal data (internal implementation)
+     */
+    private fun stopRecordingInternal(): Boolean {
         if (!dataRecorder.isRecording) {
             Timber.w("[DEBUG_LOG] No recording in progress")
             return false
@@ -265,12 +293,12 @@ class ThermalCameraManager(
     /**
      * Check if recording is in progress
      */
-    fun isRecording(): Boolean = dataRecorder.isRecording
+    override fun isRecording(): Boolean = dataRecorder.isRecording
 
     /**
      * Cleanup resources
      */
-    fun cleanup() {
+    override fun cleanup() {
         try {
             Timber.d("[DEBUG_LOG] Cleaning up thermal camera resources...")
             

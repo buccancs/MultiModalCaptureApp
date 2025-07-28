@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 2: Architectural Adjustments - MVVM + Clean Architecture Implementation** - Successfully implemented centralized control in RecordingService and unified device state machine as specified in Phase 2 requirements (2025-07-25)
+  - **DeviceState Enum Creation**: Created comprehensive DeviceState enum with required states (DISCONNECTED, PERMISSION_REQUIRED, CONNECTING, READY, STREAMING, ERROR) and DeviceStateCallback interface for type-safe state management across all hardware managers
+  - **RecordingService Central Orchestrator**: Transformed RecordingService into single source of truth for all hardware managers (CameraManager, ThermalCameraManager, GSRSensorManager, NetworkManager) with centralized initialization and lifecycle management
+  - **Unified Device State Machine**: Implemented MutableLiveData<DeviceState> for each sensor in RecordingService with automatic state change callbacks from managers, replacing ambiguous string-based statuses with robust type-safe state machine
+  - **Centralized Recording Control**: Added startRecordingSession() and stopRecordingSession() methods in RecordingService that coordinate all hardware managers in synchronized manner, ensuring timestamped data streams start/stop together
+  - **MainViewModel Service Bridge**: Refactored MainViewModel to act as bridge between RecordingService and UI, exposing service's DeviceState LiveData while maintaining backward compatibility with legacy status strings
+  - **Hardware Manager Delegation**: Updated all MainViewModel methods to delegate to RecordingService managers instead of owning hardware directly, implementing clean separation of concerns with service as single authority
+  - **DeviceState Observer Pattern**: Added setupDeviceStateObservers() in MainViewModel to automatically convert DeviceState changes to legacy status strings, maintaining UI compatibility while using modern state machine
+  - **Service-Based Manager Access**: Updated getCameraManager(), getThermalManager(), getGSRManager() methods to access managers through bound RecordingService, ensuring consistent hardware state management
+  - **NetworkManager Integration**: Ensured GSRSensorManager receives NetworkManager instance from RecordingService, establishing unified network communication channel for all components
+  - **Status String Mapping**: Implemented mapStatusToDeviceState() and mapDeviceStateToStatusString() methods for seamless conversion between legacy string statuses and modern DeviceState enum values
+
+### Added
+- **Phase 1 UI Refactoring - Single-Activity Multi-Fragment Architecture** - Successfully implemented modular screen architecture with empowered fragments and simplified MainActivity as recommended in the strategic refactoring plan (2025-07-25)
+  - **MainActivity Navigation Host Transformation**: Confirmed MainActivity already properly structured as navigation container with only ViewPager2, CustomBottomNavigationView, ServiceConnection, and global error message handling - no UI logic needed to be moved
+  - **StatusIndicatorView DeviceState Enhancement**: Enhanced StatusIndicatorView component to support comprehensive DeviceState enum (DISCONNECTED, CONNECTING, READY, STREAMING, ERROR, DISABLED) replacing limited CONNECTED/DISCONNECTED states for better status granularity
+  - **Pre-flight Guard Implementation**: Added comprehensive sensor status validation in MainCaptureFragment.handleRecordButtonClick() that checks camera, thermal, and GSR sensor readiness before starting recording, displaying specific Snackbar messages for each non-ready sensor
+  - **Fragment UI Logic Empowerment**: Verified all three fragments (MainCaptureFragment, DeviceManagementFragment, SessionsFragment) properly handle their own UI updates through ViewModel observation patterns with complete self-contained functionality
+  - **Enhanced Error Display**: Replaced TODO comment in MainCaptureFragment error observer with proper Snackbar implementation for consistent user feedback throughout the fragment
+  - **StatusIndicatorView Color Mapping**: Updated color mapping to use semantic colors - READY uses device_connected, STREAMING uses recording_active, ERROR uses error_color for intuitive visual feedback
+  - **Fragment Status Method Updates**: Updated all status update methods (updateCameraStatus, updateThermalStatus, updateGsrStatus) in MainCaptureFragment to use comprehensive when expressions supporting all DeviceState enum values
+  - **DeviceListAdapter Compatibility**: Updated DeviceListAdapter to use StatusIndicatorView.Status.READY instead of deprecated CONNECTED status for consistent component usage across the application
+  - **Unified Component Architecture**: Achieved "colour-coded chips" strategy with StatusIndicatorView providing at-a-glance status feedback using consistent reusable component throughout device management and capture interfaces
+  - **Build Verification**: Successfully verified all Phase 1 refactoring changes compile correctly and maintain full application functionality with improved modular architecture
+  - **Single Responsibility Achievement**: Each fragment now has clear single responsibility - DeviceManagementFragment for device setup, MainCaptureFragment for capture control with pre-flight validation, SessionsFragment for session data management
+
+### Added
 - **Thermal Camera File Handling Architecture Refactoring** - Successfully refactored thermal camera data recording to follow Single Responsibility Principle with robust, modular architecture (2025-07-25)
   - **ThermalDataRecorder Class Creation**: Created dedicated ThermalDataRecorder class in thermal package to handle all file I/O operations for thermal data, ensuring clean separation of concerns from camera management
   - **ByteBuffer-Based Header Writing**: Implemented safer and more efficient binary data writing using java.nio.ByteBuffer with LITTLE_ENDIAN byte order instead of manual byte manipulation, reducing error-prone bit shifting operations

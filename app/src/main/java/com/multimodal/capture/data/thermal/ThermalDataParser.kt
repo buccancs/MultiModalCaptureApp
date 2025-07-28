@@ -1,4 +1,4 @@
-package com.multimodal.capture.thermal
+package com.multimodal.capture.data.thermal
 
 import timber.log.Timber
 import java.nio.ByteBuffer

@@ -1,4 +1,4 @@
-package com.multimodal.capture.network
+package com.multimodal.capture.data.network
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName

@@ -1,11 +1,12 @@
-package com.multimodal.capture.capture
+package com.multimodal.capture.data.managers
 
 import android.content.Context
 import android.hardware.usb.UsbDevice
 import androidx.test.core.app.ApplicationProvider
-import com.multimodal.capture.thermal.Const
-import com.multimodal.capture.thermal.ThermalDataParser
-import com.multimodal.capture.thermal.USBMonitorManager
+import com.multimodal.capture.data.thermal.Const
+import com.multimodal.capture.data.thermal.ThermalDataParser
+import com.multimodal.capture.data.thermal.USBMonitorManager
+import com.multimodal.capture.data.managers.ThermalCameraManager
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
